@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketing Measurement Academy</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f172a;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Stats Bar ── */
+.stats-bar {
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.stats-bar h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+.stats-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.stat-chip {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.stat-chip.streak { color: #fb923c; }
+.stat-chip.mastered { color: #facc15; }
+.stat-chip.score { color: #4ade80; }
+
+/* ── Main ── */
+.main {
+  flex: 1;
+  padding: 24px 20px 48px;
+  max-width: 780px;
+  margin: 0 auto;
+  width: 100%;
+}
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Home ── */
+.home-title { text-align: center; margin-bottom: 28px; padding-top: 8px; }
+.home-title h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
+.home-title p { color: #94a3b8; font-size: 14px; max-width: 460px; margin: 0 auto; line-height: 1.55; }
+
+.mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+@media (max-width: 480px) { .mode-cards { grid-template-columns: 1fr; } }
+
+.mode-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+}
+.mode-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.mode-card .icon { font-size: 34px; margin-bottom: 10px; }
+.mode-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.mode-card p { color: #94a3b8; font-size: 13px; line-height: 1.5; }
+.mode-card .count {
+  display: inline-block;
+  margin-top: 10px;
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.home-progress {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 18px;
+}
+.home-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.home-progress-header h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 9px; }
+.cat-item { background: #0f172a; border-radius: 10px; padding: 10px 12px; }
+.cat-item .cat-name { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 5px; }
+.cat-bar-wrap { display: flex; align-items: center; gap: 7px; }
+.cat-bar { flex: 1; background: #334155; border-radius: 4px; height: 5px; overflow: hidden; }
+.cat-bar-fill { height: 100%; background: #3b82f6; border-radius: 4px; transition: width 0.5s; }
+.cat-bar-label { font-size: 10px; color: #475569; font-weight: 600; white-space: nowrap; }
+
+/* ── Shared view header ── */
+.view-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.btn-back {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-back:hover { color: #f1f5f9; border-color: #64748b; }
+.view-header h2 { font-size: 19px; font-weight: 700; }
+.view-header .sub { color: #64748b; font-size: 12px; margin-left: auto; white-space: nowrap; }
+
+/* ── Session progress bar ── */
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.session-bar .lbl { font-size: 11px; color: #64748b; white-space: nowrap; }
+.session-bar .bar { flex: 1; background: #334155; border-radius: 4px; height: 7px; overflow: hidden; }
+.session-bar .fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 4px; transition: width 0.4s; }
+.session-bar .pct { font-size: 12px; color: #94a3b8; font-weight: 600; white-space: nowrap; }
+
+/* ── Category filters ── */
+.cat-filters { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+.cat-filter {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cat-filter:hover, .cat-filter.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+
+/* ── Flashcard ── */
+.fc-wrap { perspective: 1200px; margin-bottom: 16px; }
+
+.flashcard {
+  width: 100%;
+  height: 300px;
+  cursor: pointer;
+  position: relative;
+}
+.fc-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+  transform-style: preserve-3d;
+}
+.flashcard.flipped .fc-inner { transform: rotateY(180deg); }
+
+.fc-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: auto;
+}
+.fc-face.back {
+  transform: rotateY(180deg);
+  background: #1a2744;
+  border-color: #3b5998;
+}
+
+.fc-cat { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #60a5fa; margin-bottom: 10px; }
+.fc-question { font-size: 19px; font-weight: 700; line-height: 1.4; color: #f1f5f9; }
+.fc-tap-hint { font-size: 12px; color: #334155; margin-top: 18px; }
+.fc-answer { font-size: 14px; line-height: 1.65; color: #cbd5e1; text-align: left; }
+.fc-formula {
+  background: #0f172a;
+  border-radius: 9px;
+  padding: 9px 14px;
+  margin: 10px 0 0;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #4ade80;
+  font-weight: 600;
+  white-space: pre-wrap;
+  text-align: left;
+  width: 100%;
+}
+.fc-mastered-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #713f12;
+  color: #fde68a;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+/* Flash animations */
+@keyframes flashGreen {
+  0%   { border-color: #334155; }
+  40%  { border-color: #4ade80; box-shadow: 0 0 20px rgba(74,222,128,0.25); }
+  100% { border-color: #3b5998; }
+}
+@keyframes flashRed {
+  0%   { border-color: #3b5998; }
+  40%  { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,0.2); }
+  100% { border-color: #3b5998; }
+}
+.flashcard.flash-ok .fc-face.back { animation: flashGreen 0.55s ease forwards; }
+.flashcard.flash-no .fc-face.back { animation: flashRed 0.55s ease forwards; }
+
+/* Controls */
+.fc-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.fc-controls.show { opacity: 1; pointer-events: all; }
+
+.btn-got-it, .btn-nope {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.btn-got-it { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+.btn-got-it:hover { background: #166534; }
+.btn-nope { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+.btn-nope:hover { background: #7f1d1d; }
+
+.fc-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.fc-pos { font-size: 13px; color: #475569; }
+.btn-nav {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-nav:hover:not(:disabled) { color: #f1f5f9; border-color: #64748b; }
+.btn-nav:disabled { opacity: 0.25; cursor: not-allowed; }
+
+/* ── Case Study List ── */
+.case-list { display: flex; flex-direction: column; gap: 9px; }
+.cs-item {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.15s;
+}
+.cs-item:hover { border-color: #3b82f6; }
+.cs-item.done { border-color: #166534; }
+.cs-item.done-wrong { border-color: #7f1d1d; }
+
+.cs-num {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #0f172a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #60a5fa;
+  flex-shrink: 0;
+}
+.cs-item.done .cs-num { background: #14532d; color: #4ade80; }
+.cs-item.done-wrong .cs-num { background: #450a0a; color: #fca5a5; }
+
+.cs-info { flex: 1; min-width: 0; }
+.cs-info .cs-title { font-size: 14px; font-weight: 600; }
+.cs-info .cs-preview { font-size: 12px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-tag { font-size: 11px; color: #64748b; background: #0f172a; border-radius: 8px; padding: 3px 8px; white-space: nowrap; flex-shrink: 0; }
+
+/* ── Case Study Detail ── */
+.cs-scenario {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+.cs-scenario .cs-s-tag {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: #a78bfa; margin-bottom: 8px;
+}
+.cs-scenario h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+.cs-scenario p { font-size: 14px; line-height: 1.68; color: #cbd5e1; }
+
+.cs-options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+.cs-opt {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  transition: all 0.15s;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  color: #e2e8f0;
+  width: 100%;
+}
+.cs-opt:hover:not(.locked) { border-color: #3b82f6; background: #172033; }
+.cs-opt.selected { border-color: #3b82f6; background: #172033; }
+.cs-opt.correct-show { border-color: #4ade80 !important; background: #052e16 !important; color: #4ade80; }
+.cs-opt.wrong-show { border-color: #ef4444 !important; background: #2d0707 !important; color: #fca5a5; }
+.cs-opt.locked { cursor: default; }
+
+.opt-lbl {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #0f172a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+.btn-submit {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  margin-bottom: 14px;
+}
+.btn-submit:hover:not(:disabled) { background: #2563eb; }
+.btn-submit:disabled { background: #1e293b; color: #475569; border: 1px solid #334155; cursor: default; }
+
+.cs-explain {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 18px;
+  display: none;
+}
+.cs-explain.show { display: block; }
+.cs-result { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.cs-result.ok { color: #4ade80; }
+.cs-result.no { color: #f87171; }
+.cs-explain-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 8px; }
+.cs-explain p { font-size: 14px; line-height: 1.68; color: #cbd5e1; }
+
+.btn-next-cs {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #f1f5f9;
+  border-radius: 12px;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  margin-top: 12px;
+}
+.btn-next-cs:hover { border-color: #94a3b8; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.ok { border-color: #4ade80; color: #4ade80; }
+.toast.no { border-color: #f87171; color: #f87171; }
+.toast.info { border-color: #60a5fa; color: #93c5fd; }
+
+/* ── Reset btn ── */
+.btn-reset {
+  background: transparent;
+  border: 1px solid #334155;
+  color: #475569;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-reset:hover { color: #f87171; border-color: #7f1d1d; }
+
+/* ── All-mastered banner ── */
+.mastered-banner {
+  background: linear-gradient(135deg, #14532d, #166534);
+  border: 1px solid #166534;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.mastered-banner strong { color: #4ade80; font-size: 16px; }
+.mastered-banner p { color: #86efac; font-size: 13px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Sticky stats bar -->
+<div class="stats-bar">
+  <h1>📊 Marketing Measurement Academy</h1>
+  <div class="stats-group">
+    <div class="stat-chip streak">🔥 <span id="s-streak">0</span></div>
+    <div class="stat-chip mastered">⭐ <span id="s-mastered">0</span> mastered</div>
+    <div class="stat-chip score">✓ <span id="s-score">0/0</span></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ── HOME ── -->
+  <div class="view active" id="view-home">
+    <div class="home-title">
+      <h2>Master Marketing Measurement</h2>
+      <p>MMM · MTA · Incrementality · CAC/LTV · Churn · Brand Health · TV Attribution — built for exec conversations and analyst debates.</p>
+    </div>
+    <div class="mode-cards">
+      <div class="mode-card" onclick="goFlashcards()">
+        <div class="icon">🃏</div>
+        <h3>Flashcards</h3>
+        <p>Drill definitions and formulas. Rate yourself to track mastery per card.</p>
+        <div class="count" id="fc-count-home">— cards active</div>
+      </div>
+      <div class="mode-card" onclick="goCaseStudies()">
+        <div class="icon">🧩</div>
+        <h3>Case Studies</h3>
+        <p>Real-world scenarios with 4-option multiple choice and detailed explanations.</p>
+        <div class="count" id="cs-count-home">12 scenarios</div>
+      </div>
+    </div>
+    <div class="home-progress">
+      <div class="home-progress-header">
+        <h3>Mastery by Category</h3>
+        <button class="btn-reset" onclick="confirmReset()">Reset All</button>
+      </div>
+      <div class="cat-grid" id="cat-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── FLASHCARDS ── -->
+  <div class="view" id="view-fc">
+    <div class="view-header">
+      <button class="btn-back" onclick="goHome()">← Home</button>
+      <h2>Flashcards</h2>
+      <span class="sub" id="fc-deck-sub"></span>
+    </div>
+    <div class="cat-filters" id="fc-cat-filters"></div>
+    <div class="session-bar">
+      <span class="lbl">Progress</span>
+      <div class="bar"><div class="fill" id="fc-bar" style="width:0%"></div></div>
+      <span class="pct" id="fc-pct">0%</span>
+    </div>
+    <div class="fc-wrap">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="fc-inner" id="fc-inner">
+          <div class="fc-face front">
+            <div class="fc-cat" id="fc-cat-f"></div>
+            <div class="fc-question" id="fc-q"></div>
+            <div class="fc-tap-hint">Click to reveal</div>
+          </div>
+          <div class="fc-face back">
+            <div class="fc-cat" id="fc-cat-b"></div>
+            <div id="fc-back-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-controls" id="fc-controls">
+      <button class="btn-nope" onclick="rateCard(false)">✗ Still Learning</button>
+      <button class="btn-got-it" onclick="rateCard(true)">✓ Got It</button>
+    </div>
+    <div class="fc-nav">
+      <button class="btn-nav" id="btn-prev" onclick="prevCard()">← Prev</button>
+      <span class="fc-pos" id="fc-pos"></span>
+      <button class="btn-nav" id="btn-next" onclick="nextCard()">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── CASE STUDY LIST ── -->
+  <div class="view" id="view-cs-list">
+    <div class="view-header">
+      <button class="btn-back" onclick="goHome()">← Home</button>
+      <h2>Case Studies</h2>
+      <span class="sub" id="cs-list-sub"></span>
+    </div>
+    <div class="session-bar">
+      <span class="lbl">Completed</span>
+      <div class="bar"><div class="fill" id="cs-bar" style="width:0%"></div></div>
+      <span class="pct" id="cs-pct">0/12</span>
+    </div>
+    <div class="case-list" id="case-list"></div>
+  </div>
+
+  <!-- ── CASE STUDY DETAIL ── -->
+  <div class="view" id="view-cs-detail">
+    <div class="view-header">
+      <button class="btn-back" onclick="goCaseStudies()">← Cases</button>
+      <span id="cs-nav-info" style="font-size:12px;color:#64748b;margin-left:auto;"></span>
+    </div>
+    <div class="cs-scenario">
+      <div class="cs-s-tag" id="cs-s-tag"></div>
+      <h3 id="cs-s-title"></h3>
+      <p id="cs-s-text"></p>
+    </div>
+    <div class="cs-options" id="cs-opts"></div>
+    <button class="btn-submit" id="cs-submit" onclick="submitCase()" disabled>Submit Answer</button>
+    <div class="cs-explain" id="cs-explain">
+      <div class="cs-result" id="cs-result"></div>
+      <div class="cs-explain-lbl">Why This Matters</div>
+      <p id="cs-explain-text"></p>
+      <button class="btn-next-cs" id="btn-next-cs" onclick="nextCase()">Next Case →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CARDS = [
+  // MMM ──────────────────────────────────────────────────────────────────────
+  { id:'mmm1', cat:'MMM',
+    q:'What is Marketing Mix Modeling (MMM)?',
+    a:'A top-down statistical modeling technique — frequentist regression or Bayesian — using historical aggregate data to estimate each marketing channel\'s contribution to sales. Accounts for price, promotions, seasonality, and competitive activity. Output: channel-level ROI, saturation curves, and budget recommendations. Also called media mix modeling.',
+    f:null },
+  { id:'mmm2', cat:'MMM',
+    q:'What is Adstock and why does it matter in MMM?',
+    a:'The carry-over effect of advertising — a TV spot doesn\'t just impact the day it airs; it decays over subsequent weeks. Adstock is modeled as geometric decay. TV/brand channels may have adstock tails of 4–8+ weeks; direct response decays in days.',
+    f:'Adstock_t = Spend_t + λ × Adstock_{t-1}\n(λ = decay rate, 0 = no carry-over, 0.9 = long tail)' },
+  { id:'mmm3', cat:'MMM',
+    q:'What is a saturation curve in MMM and what does it tell you?',
+    a:'A curve modeling the non-linear relationship between media spend and sales response. Two common shapes: (1) Diminishing returns (concave) — each additional dollar yields progressively less impact throughout; most channels behave this way in their observed spend range. (2) S-shaped (Hill function, n>1) — initial increasing returns at very low spend, then diminishing returns at higher spend. The saturation point is where marginal ROI approaches zero.',
+    f:null },
+  { id:'mmm4', cat:'MMM',
+    q:'Bayesian vs frequentist MMM — what is the key difference?',
+    a:'Bayesian MMM incorporates prior beliefs (e.g., expected channel ROI ranges based on domain knowledge) and returns probability distributions for parameters, not just point estimates. More robust with limited or collinear data. Recast uses Bayesian MMM. Priors can substitute for data you don\'t have.',
+    f:null },
+  { id:'mmm5', cat:'MMM',
+    q:'What is multicollinearity in MMM and why is it a problem?',
+    a:'When two input variables are highly correlated over time (e.g., TV and digital spend always run in sync), making it very difficult to reliably isolate their individual effects — estimates become unstable and confidence intervals widen dramatically. It\'s not impossible (Bayesian priors constrain the solution space), but results are highly sensitive to prior choices. Mitigated by: deliberate variation in spend flighting, holdout tests, or strong informative priors.',
+    f:null },
+  { id:'mmm6', cat:'MMM',
+    q:'Model fit vs model accuracy in MMM — what is the difference?',
+    a:'Fit measures how well the model explains historical data (R²). Accuracy measures out-of-sample performance on holdout periods (MAPE, CRPS). High in-sample fit does NOT guarantee accuracy — overfit models fail on unseen data. Always evaluate MMM on a holdout, not just training data.',
+    f:null },
+  { id:'mmm7', cat:'MMM',
+    q:'What is time-varying ROI and why does it matter for MMM?',
+    a:'Channel ROI changes over time due to saturation, creative fatigue, competitive activity, or seasonality. A good MMM surfaces these shifts rather than reporting a single static coefficient averaged over 2+ years. Time-varying ROI prevents you from making budget decisions based on stale averages.',
+    f:null },
+  { id:'mmm8', cat:'MMM',
+    q:'What is model stability in MMM and how do you test for it?',
+    a:'A well-specified MMM produces consistent channel ROI estimates whether run on 12 or 18 months of data. Test by re-running on different time windows: if channel coefficients shift dramatically with small data additions, the model is overfit or using poorly chosen priors.',
+    f:null },
+  { id:'mmm9', cat:'MMM',
+    q:'Short-term vs long-term ROI in MMM — what is the difference?',
+    a:'Short-term ROI captures only in-period sales lift. Long-term ROI includes the extended adstock tail and brand equity buildup over months/years. TV and brand channels have disproportionately large long-term effects that short-term metrics miss entirely — often 2–5× the short-term figure.',
+    f:null },
+  { id:'mmm10', cat:'MMM',
+    q:'What is a DAG (Directed Acyclic Graph) in marketing measurement?',
+    a:'A visual map of causal relationships between variables used to design unbiased models. Example: don\'t control for "branded search" when estimating TV effectiveness — branded search is a mediator (TV → search → sales). Controlling for a mediator removes the effect you\'re trying to measure.',
+    f:null },
+  { id:'mmm11', cat:'MMM',
+    q:'What is budget optimization and scenario planning in MMM?',
+    a:'Using MMM saturation curves and ROI estimates to simulate what revenue different budget allocations would produce. Key questions it answers: What is the revenue-maximizing allocation across channels at current total budget? What happens if budget is cut 20%? Which channel should receive the next incremental dollar? This is the primary practical output of MMM — moving from "what happened" to "what should we do next."',
+    f:null },
+
+  // MTA ──────────────────────────────────────────────────────────────────────
+  { id:'mta1', cat:'MTA',
+    q:'What is Multi-Touch Attribution (MTA)?',
+    a:'Assigns conversion credit to multiple digital touchpoints in a user\'s journey using user-level tracking (cookies, device IDs). Models: last-touch, first-touch, linear, time-decay, data-driven. Cannot see TV, radio, OOH, or untracked digital channels.',
+    f:null },
+  { id:'mta2', cat:'MTA',
+    q:'What is last-touch attribution and what does it systematically over-credit?',
+    a:'100% of credit goes to the last trackable touchpoint before conversion. Over-credits retargeting and branded search — channels that intercept demand already created by upper-funnel media. Incentivizes budget shifts to bottom-of-funnel that ultimately cannibalize brand investment.',
+    f:null },
+  { id:'mta3', cat:'MTA',
+    q:'What is Data-Driven Attribution (DDA)?',
+    a:'ML-based MTA using observed conversion paths (Shapley values or similar) to assign fractional credit based on which touchpoints increase conversion probability. More accurate than rule-based models, but still limited to tracked digital touchpoints only — blind to everything offline.',
+    f:null },
+  { id:'mta4', cat:'MTA',
+    q:'Why does MTA systematically undercount TV and offline channels?',
+    a:'MTA relies on tracking pixels and device IDs. TV, radio, and OOH generate zero trackable touchpoints. Their contribution is invisible, so MTA over-attributes conversions to last-click digital channels that merely intercepted offline-driven demand. This is the core structural flaw of MTA.',
+    f:null },
+  { id:'mta5', cat:'MTA',
+    q:'How did iOS 14 (ATT framework) damage MTA accuracy?',
+    a:'Apple\'s App Tracking Transparency dramatically reduced user-level tracking on iOS (60–70% opt-out rates). Path-to-conversion data became incomplete, biasing models toward the trackable minority. MTA estimates based on partial path data are no longer representative of the full user population.',
+    f:null },
+  { id:'mta6', cat:'MTA',
+    q:'What is an attribution window and why does it matter?',
+    a:'The time period after an ad exposure or click during which a conversion is credited to that touchpoint. Common defaults: 1-day view, 7-day click (Meta); 30-day click (Google). Shorter windows under-credit brand/awareness channels that influence decisions slowly over days or weeks. Longer windows over-credit channels running close to purchase. Different platforms use different defaults — making cross-platform ROAS comparisons actively misleading without harmonizing windows.',
+    f:null },
+
+  // Incrementality ───────────────────────────────────────────────────────────
+  { id:'inc1', cat:'Incrementality',
+    q:'What is incrementality testing?',
+    a:'A controlled experiment measuring the true causal lift of a marketing action — how many conversions wouldn\'t have happened without it. Compares an exposed group to a held-out control. Answers the critical question: "What is this channel actually causing vs just correlating with?"',
+    f:null },
+  { id:'inc2', cat:'Incrementality',
+    q:'What is a Geo Lift Test?',
+    a:'An incrementality experiment using geographic regions as units. Some geos receive the treatment (e.g., TV flight, new channel launch); matched geos serve as holdout controls. Useful when user-level randomization isn\'t possible. The validity depends entirely on how well test and control geos are matched pre-test.',
+    f:null },
+  { id:'inc3', cat:'Incrementality',
+    q:'What is a holdout group and why is it essential?',
+    a:'A segment of users or geographic regions intentionally excluded from a campaign to serve as a counterfactual baseline. Measures what revenue would have occurred without the marketing. Without a holdout, you have no counterfactual — you\'re comparing against nothing.',
+    f:null },
+  { id:'inc4', cat:'Incrementality',
+    q:'What is statistical significance in a lift test and why are lift tests often underpowered?',
+    a:'Significance is the probability the observed lift isn\'t due to random chance (target p < 0.05). Lift tests are frequently underpowered because: test/control groups must be large enough, run duration must be long enough, and the effect size must be large enough relative to baseline variance. Small tests often fail to detect real effects.',
+    f:null },
+  { id:'inc5', cat:'Incrementality',
+    q:'What is the counterfactual in incrementality testing?',
+    a:'The estimated outcome that would have occurred if the marketing had not run. Never directly observed — estimated from the holdout group. Lift = Observed Outcome (treated) − Estimated Counterfactual (control). The quality of your counterfactual determines the validity of your lift estimate.',
+    f:'Incremental Lift = Treated Outcome − Estimated Counterfactual' },
+  { id:'inc6', cat:'Incrementality',
+    q:'How should you prioritize which channels to test for incrementality first?',
+    a:'Test channels where: (1) reported ROAS is highest — most to lose if wrong, (2) you suspect attribution overcounting — retargeting, branded search, last-click channels, (3) spend is large enough to justify test cost. Rule of thumb: test the channels that would be most embarrassing if their incrementality turned out to be near zero.',
+    f:null },
+  { id:'inc7', cat:'Incrementality',
+    q:'What is statistical power and minimum detectable effect (MDE) in lift testing?',
+    a:'Statistical power = probability your test detects a true effect if one exists (target ≥80%). MDE = smallest lift the test is designed to detect. Under-powered tests are the most common lift-test failure mode — you run the test, see no significant lift, and incorrectly conclude the channel is ineffective. Before launching: calculate required sample size from your baseline conversion rate, expected lift %, desired confidence level, and available test/control population.',
+    f:'MDE ↓ requires: larger sample, longer test duration, or higher baseline CVR\nPower ≥ 80% at p < 0.05 is the standard threshold' },
+
+  // CAC / LTV ────────────────────────────────────────────────────────────────
+  { id:'cac1', cat:'CAC / LTV',
+    q:'What is Customer Acquisition Cost (CAC)?',
+    a:'Total acquisition spend divided by new customers acquired in the same period. Blended CAC includes all spend and all new customers (including organic). Paid CAC includes only paid channel spend and customers attributed to paid. Blended masks paid inefficiency when organic is strong.',
+    f:'CAC = Total Acquisition Spend / New Customers Acquired' },
+  { id:'cac2', cat:'CAC / LTV',
+    q:'What is Customer Lifetime Value (LTV) — simple formula?',
+    a:'Expected gross profit contribution from a customer over their lifetime — not revenue, since the formula multiplies by gross margin. Assumes constant ARPU and churn. More precise: discount future cash flows using cohort survival curves and a WACC. Small churn improvements have a disproportionately large LTV impact because churn sits in the denominator.',
+    f:'LTV = (ARPU × Gross Margin %) / Monthly Churn Rate\n(result is gross profit, not revenue)' },
+  { id:'cac3', cat:'CAC / LTV',
+    q:'What is the LTV:CAC ratio and what are the benchmarks?',
+    a:'Key unit economics health metric. SaaS rule of thumb: >3x is healthy, <1x = acquiring customers at a loss. DTC/e-commerce may target >2x given lower margins. Early-stage companies sometimes tolerate <3x while scaling toward efficiency. Always pair with payback period to assess cash risk.',
+    f:'LTV:CAC = LTV / CAC    (target: >3x for SaaS, >2x for DTC)' },
+  { id:'cac4', cat:'CAC / LTV',
+    q:'What is Payback Period?',
+    a:'How long it takes to recoup CAC from a customer\'s gross margin contribution. Under 12 months = strong. 12–18 months = acceptable for well-capitalized businesses. 18+ months = risky without deep pockets or very high LTV. Critical for cash-constrained companies — long payback means slow capital recycling.',
+    f:'Payback (months) = CAC / (ARPU × Gross Margin %)' },
+  { id:'cac5', cat:'CAC / LTV',
+    q:'Blended CAC vs channel-level CAC — when does each mislead you?',
+    a:'Blended CAC = all spend ÷ all new customers (including organic). Misleads when organic acquisition is strong — a flood of organic customers makes paid channels look efficient when they\'re not. Channel CAC misleads when attribution is broken (MTA over-credits last-touch) or when channels create demand that converts through other channels.',
+    f:null },
+  { id:'cac6', cat:'CAC / LTV',
+    q:'Why is LTV non-linear with respect to churn rate?',
+    a:'Because churn is the denominator. Small differences compound dramatically: 2% monthly churn → LTV = 50× (ARPU×GM); 5% → 20×; 10% → 10×. Reducing churn from 5% to 4% increases LTV by 25% — far more impactful than cutting CAC by 25%. Retention is usually the highest-ROI lever in unit economics.',
+    f:null },
+
+  // Churn ────────────────────────────────────────────────────────────────────
+  { id:'ch1', cat:'Churn',
+    q:'What is churn rate and how do you annualize monthly churn?',
+    a:'% of customers lost in a period. Monthly and annual rates are not additive — annualize by compounding. Example: 3% monthly churn ≈ 30.6% annual. 5% monthly ≈ 46% annual — much worse than it sounds.',
+    f:'Churn = Lost Customers / Starting Customers\nAnnualized = 1 − (1 − Monthly Rate)^12' },
+  { id:'ch2', cat:'Churn',
+    q:'Gross Revenue Churn vs Net Revenue Churn — what is the difference?',
+    a:'Gross Revenue Churn = % of MRR lost from cancellations and downgrades only. Net Revenue Churn subtracts expansion revenue (upsells/upgrades) from existing customers. Negative net churn means expansions outpace losses — a powerful growth engine where you grow revenue even acquiring zero new customers.',
+    f:'Net Revenue Churn % = (Churn MRR + Downgrade MRR − Expansion MRR) / Starting MRR\nShorthand: Net Churn % = Gross Churn % − Expansion Revenue %' },
+  { id:'ch3', cat:'Churn',
+    q:'What is a cohort retention curve and what does a healthy one look like?',
+    a:'Tracks what % of a customer cohort (acquired in the same period) remains active over time. A healthy curve starts high, drops quickly in the first 1–3 months (early churn), then flattens into a long tail of loyal customers. Improving early-period retention has the highest LTV impact.',
+    f:null },
+  { id:'ch4', cat:'Churn',
+    q:'When churn spikes, what is the correct first diagnostic step?',
+    a:'Cohort analysis. Is the spike concentrated in recently acquired cohorts (→ acquisition quality issue: new channel, new audience, poor onboarding) or cross-cutting all cohorts (→ product change, price increase, competitive event)? Never assume it\'s a marketing problem until you isolate the cohort signature.',
+    f:null },
+
+  // Brand Health ─────────────────────────────────────────────────────────────
+  { id:'br1', cat:'Brand Health',
+    q:'Aided vs unaided brand awareness — what is the difference and which is stronger?',
+    a:'Unaided: "Name a brand that sells running shoes" — tests spontaneous recall. Aided: "Have you heard of Nike?" — tests recognition when prompted. Unaided is a stronger signal of brand salience and harder to achieve. Both tracked via survey panels (e.g., Lucid, Dynata, proprietary trackers).',
+    f:null },
+  { id:'br2', cat:'Brand Health',
+    q:'What is Brand Consideration and why is it a leading indicator?',
+    a:'% of target audience who would consider your brand when making a relevant purchase. Typically leads revenue by 3–9 months. More actionable than awareness: bridges the gap between "being known" and "being chosen." Falling consideration predicts future revenue softness before it shows up in sales data.',
+    f:null },
+  { id:'br3', cat:'Brand Health',
+    q:'What is Share of Voice (SOV) and Excess Share of Voice (eSOV)?',
+    a:'SOV = your ad spend ÷ total category ad spend. Excess SOV = SOV minus your current market share. Research from Binet & Field shows that positive eSOV predicts future market share growth — brands investing above share tend to grow. Negative eSOV predicts share erosion.',
+    f:'eSOV = Share of Voice − Market Share    (positive = growth signal)' },
+  { id:'br4', cat:'Brand Health',
+    q:'How does brand equity show up in MMM?',
+    a:'Brand equity appears in the MMM baseline — the portion of sales not explained by current marketing activity. A strong brand maintains high baseline sales even when all paid media goes dark. MMM can\'t fully separate brand equity from pricing, distribution, or seasonality without careful model design.',
+    f:null },
+  { id:'br5', cat:'Brand Health',
+    q:'What is a Brand Lift Study?',
+    a:'A survey-based study run alongside an ad campaign measuring changes in awareness, consideration, and purchase intent among exposed vs. unexposed audiences. Common on YouTube, Meta, CTV, and Linear TV (via panel matching). Measures upper-funnel impact but doesn\'t directly connect to revenue without additional modeling.',
+    f:null },
+
+  // TV Measurement ───────────────────────────────────────────────────────────
+  { id:'tv1', cat:'TV Measurement',
+    q:'What are GRPs (Gross Rating Points)?',
+    a:'Measure of TV ad exposure = Reach% × Average Frequency. 100 GRPs could mean 100% of target reached once, or 50% reached twice. A media planning unit, not a revenue metric. Useful for comparing campaign weight across markets or time periods. The standard currency for buying and selling TV advertising.',
+    f:'GRPs = Reach (%) × Average Frequency' },
+  { id:'tv2', cat:'TV Measurement',
+    q:'Reach vs frequency in TV — which matters more for brand building?',
+    a:'Reach matters more for brand building — you need to touch new people to grow the brand. Traditional media planning targeted ~3+ effective exposures (Krugman), but modern recency planning (Ephron) shifts focus to reaching the right audience near their purchase moment — even 1–2 exposures can outperform many exposures to the wrong audience at the wrong time. After ~70–80% reach saturation, additional spend buys frequency rather than new reach.',
+    f:null },
+  { id:'tv3', cat:'TV Measurement',
+    q:'How do iSpot and EDO measure TV effectiveness?',
+    a:'They correlate TV ad airings (second-level precision) with spikes in branded search queries, app downloads, or website traffic in the minutes immediately after a spot airs. Provides near-real-time TV attribution without user-level tracking. Measures engagement/response lift, not full revenue contribution — best paired with MMM.',
+    f:null },
+  { id:'tv4', cat:'TV Measurement',
+    q:'Why is MMM the gold standard for TV measurement?',
+    a:'TV has no digital tracking fingerprint, so MTA is blind to it. Simple before/after comparisons confound seasonality and competitive activity. MMM uses TV GRPs (or spend) as an input variable with adstock decay to estimate its causal contribution to sales over a full historical window — the only method that captures TV\'s full effect.',
+    f:null },
+  { id:'tv5', cat:'TV Measurement',
+    q:'What is the TV halo effect on digital channels?',
+    a:'TV ads generate demand that surfaces through digital channels — branded search spikes after a TV spot airs, making paid search and organic look more effective. MTA over-credits those digital channels. A properly built MMM includes both TV GRPs and digital spend as separate variables, allowing TV\'s upstream contribution to be isolated.',
+    f:null },
+  { id:'tv6', cat:'TV Measurement',
+    q:'What is diminishing returns on TV reach and at what threshold does it typically kick in?',
+    a:'As TV spend increases, you first reach the most reachable audiences efficiently. After roughly 70–80% reach, additional spend buys more frequency on already-exposed viewers rather than new people. Incremental reach becomes very expensive. MMM saturation curves quantify this ceiling and identify the optimal GRP level.',
+    f:null },
+  { id:'tv7', cat:'TV Measurement',
+    q:'CTV (Connected TV) vs Linear TV — how does measurement differ?',
+    a:'Linear TV is bought on GRPs (audience-level, panel-based ratings). CTV is bought on impressions (device/IP-level, programmatic). CTV enables more granular measurement: household-level exposure matching, search lift and site visit attribution, and cleaner geo holdout tests. Linear measurement relies primarily on MMM and panel-based brand lift surveys. Most major campaigns now run both; MMM is still the best way to compare their combined contribution to sales.',
+    f:null },
+
+  // MER / ROAS ───────────────────────────────────────────────────────────────
+  { id:'roas1', cat:'MER / ROAS',
+    q:'What is ROAS and what is its critical limitation?',
+    a:'Revenue ÷ ad spend. Measures channel-level revenue efficiency, not profitability. Doesn\'t account for COGS, gross margin, or the organic baseline. A 5x ROAS channel may still be unprofitable at thin margins, or may be over-credited for organic demand it merely intercepted. Never optimize ROAS in isolation.',
+    f:'ROAS = Revenue Attributed / Ad Spend' },
+  { id:'roas2', cat:'MER / ROAS',
+    q:'What is MER (Marketing Efficiency Ratio)?',
+    a:'Total revenue divided by total marketing spend. A blended, top-down view less susceptible to attribution gaming. Rising MER = the marketing portfolio as a whole is becoming more efficient. Useful for executive reporting and detecting overall portfolio health. Cannot diagnose which channel is responsible for changes.',
+    f:'MER = Total Revenue / Total Marketing Spend' },
+  { id:'roas3', cat:'MER / ROAS',
+    q:'What is iROAS (Incremental ROAS) and why does it differ from reported ROAS?',
+    a:'ROAS calculated only on incrementally-caused revenue — revenue that wouldn\'t have existed without the marketing. Derived from MMM or lift tests. Almost always much lower than reported ROAS. A channel reporting 6x ROAS might have iROAS of 1.5x if most "attributed" conversions were organic or influenced by other channels.',
+    f:'iROAS = Incremental Revenue / Ad Spend  (from MMM or lift test)' },
+  { id:'roas4', cat:'MER / ROAS',
+    q:'Why is ROAS especially misleading for brand and TV channels?',
+    a:'Brand channels build demand over time, not in the moment. ROAS only captures in-period revenue, missing long-term brand effects that materialize over months. TV generates no trackable touchpoints for MTA-based ROAS. Short-term ROAS for brand channels systematically understates their value — sometimes by 5× or more.',
+    f:null },
+  { id:'roas5', cat:'MER / ROAS',
+    q:'What is the "budget death spiral" caused by over-relying on MTA ROAS?',
+    a:'MTA shows high ROAS for lower-funnel/branded channels and low ROAS for upper-funnel. Budget shifts to lower-funnel → upper-funnel shrinks → fewer new people enter the consideration set → branded search demand declines → lower-funnel "performance" degrades 12–24 months later. The lag masks the cause until damage is done.',
+    f:null },
+];
+
+
+const CASES = [
+  {
+    id:'cs1', title:'The Attribution Conflict', cat:'MMM vs MTA',
+    scenario:'Your MMM shows YouTube ROI at 0.8x (below breakeven). Your MTA reports YouTube ROAS at 4.2x. Your head of digital insists MTA is right and wants to double YouTube budget. How do you resolve this conflict with your exec team?',
+    opts:[
+      'Trust MTA — it\'s more granular and user-level data is inherently more accurate',
+      'Trust MMM — it measures actual revenue outcomes and isn\'t limited by digital tracking',
+      'Split the difference and use the average of both estimates as a budget guide',
+      'Scale YouTube spend and monitor weekly ROAS to see which model\'s prediction holds'
+    ],
+    correct:1,
+    explain:'MTA over-credits last-touch digital touchpoints and cannot see YouTube\'s view-through and brand-lift effects on downstream channels. Many YouTube conversions attributed by MTA would have happened organically. MMM uses aggregate revenue outcomes independent of tracking, making it far less susceptible to this bias. The right move: trust MMM and validate with a geo holdout test if the stakes are high enough to run one.'
+  },
+  {
+    id:'cs2', title:'Measuring TV for the First Time', cat:'TV Measurement',
+    scenario:'Your brand just launched national TV for the first time. Your CMO wants to know if it\'s working within 60 days. You have weekly revenue data, weekly TV GRPs by market, and digital spend data. What is the best primary measurement approach?',
+    opts:[
+      'MTA with cross-device tracking enabled to capture TV\'s downstream digital influence',
+      'Run a brand lift survey to measure awareness lift among TV viewers',
+      'Build an MMM with TV GRPs as an input variable and appropriate adstock decay',
+      'Compare sales in TV flight weeks vs non-flight weeks as a simple before/after test'
+    ],
+    correct:2,
+    explain:'TV has no digital tracking fingerprint, so MTA is blind to it. Brand lift surveys measure upper-funnel impact (awareness/consideration) but don\'t connect to revenue. Simple flight-week comparisons confound seasonality, promotions, and other media. MMM with TV GRPs as a variable, paired with adstock, is the gold standard — it isolates TV\'s sales contribution while controlling for all other factors. 60 days is tight but feasible for an initial estimate with strong priors.'
+  },
+  {
+    id:'cs3', title:'Defending a High CAC', cat:'CAC / LTV',
+    scenario:'A DTC subscription brand: monthly price = $50, gross margin = 60%, monthly churn = 5%, paid CAC = $240. A senior exec says "our CAC is way too high for a $50/month product — we need to cut it in half." How do you respond?',
+    opts:[
+      'Agree — $240 is too expensive to acquire a $50/month customer at any margin',
+      'Disagree — run the math: LTV = $600, LTV:CAC = 2.5x, payback = 8 months. The CAC is healthy.',
+      'Partially agree — CAC should be under $150 as a rule of thumb for DTC subscriptions',
+      'The exec is right; ROAS should guide acquisition spend targets, not CAC'
+    ],
+    correct:1,
+    explain:'Always contextualize CAC against LTV and payback period. LTV = ($50 × 60%) / 5% = $600. LTV:CAC = $600 / $240 = 2.5x (acceptable, above 2x for DTC). Payback = $240 / ($50 × 60%) = $240 / $30 = 8 months (excellent — well under 12 months). The exec\'s intuition was wrong because they judged CAC in isolation. The correct framework: if LTV:CAC > 2x and payback < 12 months, the acquisition economics are healthy.'
+  },
+  {
+    id:'cs4', title:'Diagnosing a Churn Spike', cat:'Churn',
+    scenario:'Monthly churn jumped from 3.2% to 5.8% over the past 6 weeks. Your acquisition team says paid spend and channels haven\'t changed. Your product team says no major releases shipped. Where do you start the investigation?',
+    opts:[
+      'Cut paid acquisition spend immediately to stop acquiring customers who will churn',
+      'Run a cohort analysis to determine if the spike is concentrated in recent cohorts or cross-cutting all vintages',
+      'Survey churned customers with a cancellation flow questionnaire',
+      'Assume it\'s a seasonal pattern and monitor for 4 more weeks before taking action'
+    ],
+    correct:1,
+    explain:'Cohort analysis is the essential first step. If the spike is concentrated in customers acquired in the last 60 days, it points to an acquisition quality change — a new channel, new creative, wrong audience, or degraded onboarding. If it\'s cross-cutting all cohorts uniformly, it suggests a product issue, competitive event, price sensitivity, or macro factor. Cutting spend before diagnosing the source is premature and may kill healthy acquisition. Customer surveys are useful but slower — cohort data is already in your warehouse.'
+  },
+  {
+    id:'cs5', title:'Strong ROAS, Falling Brand', cat:'Brand Health',
+    scenario:'Paid media ROAS is a healthy 3.8x and trending upward. But your brand health tracker shows brand consideration dropping 8 points over 6 months. The board asks: "Is marketing working?" How do you frame your answer honestly?',
+    opts:[
+      'Yes — ROAS of 3.8x clearly demonstrates marketing is delivering strong returns',
+      'No — falling consideration means the entire marketing strategy is failing',
+      'It\'s nuanced: short-term performance is strong, but you\'re harvesting brand equity; falling consideration is a leading indicator of future revenue softness',
+      'Brand consideration surveys are unreliable noise — revenue data is the only metric that matters'
+    ],
+    correct:2,
+    explain:'This is the classic short-term vs long-term tension. Strong ROAS often reflects "harvesting" — capturing intent already created by past brand investment. Falling consideration means fewer people are entering the consideration set, predicting a revenue decline in 6–18 months when that demand runs dry. The honest board message: short-term efficiency looks good, but the brand funnel is leaking. Without upper-funnel investment, ROAS will degrade as the pipeline of in-market customers shrinks.'
+  },
+  {
+    id:'cs6', title:'Geo Holdout Test Design', cat:'Incrementality',
+    scenario:'You want to test whether your Connected TV (CTV) spend is incrementally driving e-commerce sales. You have sales data by DMA. What is the single most important design principle for a valid geo lift test?',
+    opts:[
+      'Choose the largest DMAs for the test group to maximize statistical power',
+      'Match test and control geos on pre-test sales trends, market size, and demographics',
+      'Run the test during your highest-revenue season for the clearest signal-to-noise ratio',
+      'Use exactly 50% of DMAs as holdout to ensure balance'
+    ],
+    correct:1,
+    explain:'Geo lift test validity depends entirely on pre-test similarity between test and control geos. If they trended differently before the test, any difference during the test period could be pre-existing divergence, not the CTV campaign. Match on: pre-test sales trajectory, market size, demographic mix, and competitive presence. Running during peak season actually increases noise because seasonal variation can swamp a modest marketing lift. Using 50% holdout regardless of selection ignores whether those geos are comparable.'
+  },
+  {
+    id:'cs7', title:'Payback vs LTV Trade-off', cat:'CAC / LTV',
+    scenario:'Two channels have equal monthly spend. Channel A: 6-month payback, LTV:CAC = 1.8x. Channel B: 18-month payback, LTV:CAC = 4.2x. Your company has approximately 18 months of runway. Which channel should get more budget?',
+    opts:[
+      'Channel B — higher LTV:CAC is always the correct optimization target',
+      'Channel A — shorter payback is always better regardless of LTV:CAC',
+      'Split evenly — both channels produce profitable customers',
+      'Favor Channel A given the cash constraint; Channel B\'s 18-month payback is too risky at current runway'
+    ],
+    correct:3,
+    explain:'This is a genuine trade-off between unit economics and cash risk. Channel B has superior long-term returns (4.2x LTV:CAC) but requires 18 months to recoup CAC — exactly matching your runway. One bad quarter could prevent those customers from ever becoming profitable before you run out of cash. Channel A recoups in 6 months, giving you capital to recycle. With 18 months of runway, the survival-first answer is Channel A, while you work to either extend runway or improve Channel B\'s payback structure.'
+  },
+  {
+    id:'cs8', title:'The Retargeting ROAS Trap', cat:'Incrementality',
+    scenario:'Your retargeting campaigns report 12x ROAS in MTA. Your CMO wants to triple retargeting budget — "it\'s our most efficient channel by far." You\'re skeptical. What is the most likely explanation and what do you recommend?',
+    opts:[
+      'A 12x ROAS is legitimate — retargeting converts intent and deserves the credit',
+      'The tracking pixel is probably misconfigured — request an audit before any budget change',
+      'The high ROAS almost certainly reflects attribution bias: MTA over-credits the last-touch ad for conversions that would have happened organically anyway',
+      'Triple the budget immediately while setting up incrementality tests in parallel'
+    ],
+    correct:2,
+    explain:'Retargeting is the canonical MTA over-attribution trap. Users in retargeting pools are already in-market by definition — they visited your site, added to cart, or showed explicit purchase intent. Many would convert without ever seeing the retargeting ad. MTA assigns heavy credit to the last-click touchpoint regardless of causality. True incremental value is almost always far lower than reported ROAS. Recommendation: run a conversion lift test (PSA holdout) before scaling. A 12x iROAS would be extraordinary; 1–2x is typical once incrementality is isolated.'
+  },
+  {
+    id:'cs9', title:'TV Halo Effect Attribution', cat:'TV Measurement',
+    scenario:'A brand runs heavy national TV alongside paid branded search. Branded search volume and conversions consistently spike during TV flight weeks. Which measurement approach correctly attributes this cross-channel effect to TV?',
+    opts:[
+      'MTA with cross-device tracking to connect TV exposure to search click',
+      'MMM with TV GRPs and paid search as separate input variables — TV\'s coefficient captures demand creation, including the portion that flows through search',
+      'Brand lift survey measuring search intent uplift among TV viewers',
+      'Measure branded search click volume in flight vs non-flight weeks as a proxy'
+    ],
+    correct:1,
+    explain:'This is the TV halo effect. MTA will wrongly credit paid search for conversions causally driven by TV — it sees the search click but not the TV spot. A well-structured MMM includes both TV GRPs and paid search spend as separate variables. When estimated correctly, TV\'s coefficient captures the full demand-creation effect including the share that surfaces through branded search. The search coefficient then reflects only its incremental contribution above the demand TV already generated. No other method correctly decomposes this relationship.'
+  },
+  {
+    id:'cs10', title:'The Lower-Funnel Budget Spiral', cat:'MTA vs MMM',
+    scenario:'MTA shows Branded Paid Search at 9x ROAS and Prospecting Display at 0.5x ROAS. Over 18 months, the team has steadily shifted budget from Display to Branded Search. Display spend is now 15% of what it was. What risk is this creating?',
+    opts:[
+      'No risk — optimizing toward highest ROAS is the correct strategy',
+      'Branded search bidding costs may increase with more budget competing for the same queries',
+      'The brand is depleting upper-funnel brand equity; fewer new people enter the consideration set, and branded search demand will decline 12–24 months later',
+      'Display at 0.5x ROAS may have attribution data quality issues that should be investigated first'
+    ],
+    correct:2,
+    explain:'This is the budget death spiral. Branded search appears efficient because it captures demand already created by Display, TV, word-of-mouth, and organic brand activity. Cutting Display removes the upstream pipeline of new people who will ever search for your brand. 12–24 months later, branded search volume declines because new demand creation stopped — and the apparent "performance" of branded search degrades too. MTA systematically incentivizes this mistake because it cannot see what Display did upstream. MMM is needed to model the full funnel relationship and prevent this pattern.'
+  },
+  {
+    id:'cs11', title:'MMM with Limited Data', cat:'MMM',
+    scenario:'A startup has 15 months of revenue data and runs 4 channels: TV, paid social, paid search, and email. An MMM vendor says they need at least 2 years of data for a valid model. Is the vendor right, and what is the path forward?',
+    opts:[
+      'Yes — 2 years is always the minimum for any valid MMM; do not proceed yet',
+      'No — Bayesian MMM can produce useful estimates with 12–18 months using strong, well-calibrated priors for channel ROI ranges and adstock decay',
+      'It depends on how many channels are included, not the time period',
+      'Run the model with 15 months and disregard any uncertainty warnings in the output'
+    ],
+    correct:1,
+    explain:'The "2 years" rule is a frequentist MMM rule of thumb — you need enough variation to estimate seasonal patterns and channel effects without priors. Bayesian MMM can produce useful estimates with 12–18 months by incorporating strong prior beliefs about channel ROI ranges, adstock decay, and saturation based on industry benchmarks and domain expertise. The priors effectively supplement limited data with structured knowledge. Caveat: with 15 months, seasonal parameter uncertainty is high unless the window spans at least two holiday periods. Be transparent about confidence intervals.'
+  },
+  {
+    id:'cs12', title:'Negative Net Revenue Churn', cat:'Churn',
+    scenario:'A B2B SaaS company reports gross revenue churn = 9% annually, net revenue churn = −5% annually. A new investor says "9% gross churn is dangerously high — this company has a retention problem." How do you respond?',
+    opts:[
+      'Agree — gross churn above 5% annually is a serious problem regardless of expansion',
+      'Disagree — net revenue churn of −5% means existing customers are expanding faster than others are churning; the installed base is growing even with zero new sales',
+      'The investor is right to focus on gross churn because it better reflects customer satisfaction',
+      'Net churn is easy to manipulate with forced upsells; focus on gross churn as the honest metric'
+    ],
+    correct:1,
+    explain:'Negative net revenue churn is one of the strongest SaaS health signals. −5% net churn means the installed base grows in revenue terms even after accounting for all churned and downgraded accounts. In theory, the company could acquire zero new customers and still grow revenue from existing ones. Gross churn of 9% is worth improving (each churned customer represents a lost relationship and sunk acquisition cost), but it does NOT mean the company has a retention problem if expansion revenue more than offsets it. Context: enterprise SaaS often has higher gross churn but very strong expansion patterns.'
+  }
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+let S = {
+  streak: 0,
+  totalCorrect: 0,
+  totalAttempted: 0,
+  cards: {},   // { id: { consec: 0, mastered: false } }
+  cases: {}    // { id: { done: true, correct: bool, chosen: n } }
+};
+
+// Flashcard session
+let FC = { cat:'All', deck:[], idx:0, flipped:false };
+
+// Case study session
+let CS = { id:null, chosen:null, submitted:false };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STORAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function save() { localStorage.setItem('mma2', JSON.stringify(S)); }
+function load() {
+  const d = localStorage.getItem('mma2');
+  if (d) try { Object.assign(S, JSON.parse(d)); } catch(e){}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+
+function init() {
+  load();
+  renderStatsBar();
+  renderCatGrid();
+  updateHomeCards();
+}
+
+function renderStatsBar() {
+  document.getElementById('s-streak').textContent = S.streak;
+  const m = Object.values(S.cards).filter(c => c.mastered).length;
+  document.getElementById('s-mastered').textContent = m;
+  document.getElementById('s-score').textContent = S.totalCorrect + '/' + S.totalAttempted;
+}
+
+function renderCatGrid() {
+  const cats = [...new Set(CARDS.map(c => c.cat))];
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = cats.map(cat => {
+    const all = CARDS.filter(c => c.cat === cat);
+    const m = all.filter(c => S.cards[c.id]?.mastered).length;
+    const pct = Math.round(m / all.length * 100);
+    return `<div class="cat-item">
+      <div class="cat-name">${cat}</div>
+      <div class="cat-bar-wrap">
+        <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+        <span class="cat-bar-label">${m}/${all.length}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateHomeCards() {
+  const active = CARDS.filter(c => !S.cards[c.id]?.mastered).length;
+  document.getElementById('fc-count-home').textContent = active + ' active / ' + CARDS.length + ' total';
+  const done = Object.values(S.cases).filter(c => c.done).length;
+  document.getElementById('cs-count-home').textContent = done + '/' + CASES.length + ' completed';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  renderStatsBar();
+  renderCatGrid();
+  updateHomeCards();
+  showView('view-home');
+}
+
+function goFlashcards() {
+  FC.cat = 'All';
+  buildDeck();
+  renderCatFilters();
+  renderCard();
+  updateFCBar();
+  showView('view-fc');
+}
+
+function goCaseStudies() {
+  renderCaseList();
+  updateCSBar();
+  showView('view-cs-list');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLASHCARD LOGIC
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildDeck() {
+  let pool = FC.cat === 'All'
+    ? CARDS.filter(c => !S.cards[c.id]?.mastered)
+    : CARDS.filter(c => c.cat === FC.cat && !S.cards[c.id]?.mastered);
+  if (pool.length === 0) pool = FC.cat === 'All' ? [...CARDS] : CARDS.filter(c => c.cat === FC.cat);
+  FC.deck = pool.sort(() => Math.random() - 0.5);
+  FC.idx = 0;
+  FC.flipped = false;
+}
+
+function renderCatFilters() {
+  const cats = ['All', ...new Set(CARDS.map(c => c.cat))];
+  document.getElementById('fc-cat-filters').innerHTML = cats.map(cat => {
+    const n = cat === 'All'
+      ? CARDS.filter(c => !S.cards[c.id]?.mastered).length
+      : CARDS.filter(c => c.cat === cat && !S.cards[c.id]?.mastered).length;
+    return `<button class="cat-filter ${FC.cat === cat ? 'active' : ''}" onclick="filterCat('${cat}')">${cat} <span style="opacity:.55">${n}</span></button>`;
+  }).join('');
+}
+
+function filterCat(cat) {
+  FC.cat = cat;
+  buildDeck();
+  renderCatFilters();
+  renderCard();
+  updateFCBar();
+}
+
+function renderCard() {
+  const card = FC.deck[FC.idx];
+  if (!card) return;
+
+  // Reset state
+  const el = document.getElementById('flashcard');
+  el.classList.remove('flipped', 'flash-ok', 'flash-no');
+  FC.flipped = false;
+  document.getElementById('fc-controls').classList.remove('show');
+
+  // Front
+  document.getElementById('fc-cat-f').textContent = card.cat;
+  document.getElementById('fc-q').textContent = card.q;
+
+  // Back
+  document.getElementById('fc-cat-b').textContent = card.cat;
+  let back = `<div class="fc-answer">${card.a}</div>`;
+  if (card.f) back += `<div class="fc-formula">${card.f}</div>`;
+  if (S.cards[card.id]?.mastered) back += `<div class="fc-mastered-badge">⭐ Mastered</div>`;
+  document.getElementById('fc-back-content').innerHTML = back;
+
+  // Nav
+  document.getElementById('fc-pos').textContent = (FC.idx + 1) + ' / ' + FC.deck.length;
+  document.getElementById('btn-prev').disabled = FC.idx === 0;
+  document.getElementById('btn-next').disabled = FC.idx === FC.deck.length - 1;
+  document.getElementById('fc-deck-sub').textContent = FC.deck.length + ' cards in deck';
+}
+
+function flipCard() {
+  if (!FC.deck[FC.idx]) return;
+  FC.flipped = !FC.flipped;
+  document.getElementById('flashcard').classList.toggle('flipped', FC.flipped);
+  document.getElementById('fc-controls').classList.toggle('show', FC.flipped);
+}
+
+function rateCard(correct) {
+  if (!FC.flipped) return;
+  const card = FC.deck[FC.idx];
+  if (!S.cards[card.id]) S.cards[card.id] = { consec: 0, mastered: false };
+  const p = S.cards[card.id];
+
+  if (correct) {
+    p.consec++;
+    S.streak++;
+    S.totalCorrect++;
+    if (p.consec >= 3 && !p.mastered) {
+      p.mastered = true;
+      toast('⭐ Card Mastered!', 'ok');
+    } else {
+      const msgs = ['🔥 Streak: ' + S.streak, '✓ Got it!', '💪 Nice!', '🎯 Correct!'];
+      toast(msgs[S.totalCorrect % msgs.length], 'ok');
+    }
+  } else {
+    p.consec = 0;
+    S.streak = 0;
+    toast('Keep going — review it again', 'no');
+  }
+  S.totalAttempted++;
+
+  const el = document.getElementById('flashcard');
+  el.classList.add(correct ? 'flash-ok' : 'flash-no');
+  setTimeout(() => el.classList.remove('flash-ok', 'flash-no'), 600);
+
+  save();
+  renderStatsBar();
+  updateFCBar();
+
+  setTimeout(() => {
+    if (FC.idx < FC.deck.length - 1) { FC.idx++; renderCard(); }
+    else { toast('🎉 End of deck!', 'info'); renderCatFilters(); }
+  }, 650);
+}
+
+function prevCard() { if (FC.idx > 0) { FC.idx--; renderCard(); } }
+function nextCard() { if (FC.idx < FC.deck.length - 1) { FC.idx++; renderCard(); } }
+
+function updateFCBar() {
+  const pct = FC.deck.length > 0 ? Math.round(FC.idx / FC.deck.length * 100) : 0;
+  document.getElementById('fc-bar').style.width = pct + '%';
+  document.getElementById('fc-pct').textContent = pct + '%';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CASE STUDY LOGIC
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderCaseList() {
+  const list = document.getElementById('case-list');
+  list.innerHTML = CASES.map((c, i) => {
+    const prog = S.cases[c.id];
+    let cls = '';
+    if (prog?.done && prog.correct) cls = 'done';
+    else if (prog?.done && !prog.correct) cls = 'done-wrong';
+    const numLabel = prog?.done ? (prog.correct ? '✓' : '✗') : (i + 1);
+    return `<div class="cs-item ${cls}" onclick="openCase('${c.id}')">
+      <div class="cs-num">${numLabel}</div>
+      <div class="cs-info">
+        <div class="cs-title">${c.title}</div>
+        <div class="cs-preview">${c.scenario.substring(0, 85)}…</div>
+      </div>
+      <span class="cs-tag">${c.cat}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateCSBar() {
+  const done = Object.values(S.cases).filter(c => c.done).length;
+  const pct = Math.round(done / CASES.length * 100);
+  document.getElementById('cs-bar').style.width = pct + '%';
+  document.getElementById('cs-pct').textContent = done + '/' + CASES.length;
+  document.getElementById('cs-list-sub').textContent = done + ' completed';
+}
+
+function openCase(id) {
+  const c = CASES.find(x => x.id === id);
+  if (!c) return;
+  CS.id = id;
+  CS.chosen = null;
+  CS.submitted = false;
+
+  const idx = CASES.findIndex(x => x.id === id);
+  document.getElementById('cs-nav-info').textContent = `Case ${idx + 1} of ${CASES.length}`;
+  document.getElementById('cs-s-tag').textContent = c.cat;
+  document.getElementById('cs-s-title').textContent = c.title;
+  document.getElementById('cs-s-text').textContent = c.scenario;
+
+  const labels = ['A','B','C','D'];
+  document.getElementById('cs-opts').innerHTML = c.opts.map((o, i) =>
+    `<button class="cs-opt" onclick="chooseOpt(${i})">
+      <span class="opt-lbl">${labels[i]}</span>${o}
+    </button>`
+  ).join('');
+
+  const sub = document.getElementById('cs-submit');
+  sub.disabled = true;
+  sub.textContent = 'Submit Answer';
+  document.getElementById('cs-explain').classList.remove('show');
+
+  const prog = S.cases[id];
+  if (prog?.done) {
+    revealCase(c, prog.chosen);
+    sub.disabled = true;
+    sub.textContent = prog.correct ? '✓ Correct!' : '✗ Incorrect';
+  }
+
+  showView('view-cs-detail');
+}
+
+function chooseOpt(i) {
+  if (CS.submitted) return;
+  CS.chosen = i;
+  document.querySelectorAll('.cs-opt').forEach((el, j) => el.classList.toggle('selected', j === i));
+  document.getElementById('cs-submit').disabled = false;
+}
+
+function submitCase() {
+  if (CS.chosen === null || CS.submitted) return;
+  CS.submitted = true;
+  const c = CASES.find(x => x.id === CS.id);
+  const correct = CS.chosen === c.correct;
+
+  if (!S.cases[CS.id]?.done) {
+    S.cases[CS.id] = { done: true, correct, chosen: CS.chosen };
+    S.totalAttempted++;
+    if (correct) { S.totalCorrect++; S.streak++; }
+    else S.streak = 0;
+    save();
+    renderStatsBar();
+  }
+
+  revealCase(c, CS.chosen);
+  const sub = document.getElementById('cs-submit');
+  sub.disabled = true;
+  sub.textContent = correct ? '✓ Correct!' : '✗ Incorrect';
+
+  const idx = CASES.findIndex(x => x.id === CS.id);
+  const nextBtn = document.getElementById('btn-next-cs');
+  nextBtn.textContent = idx < CASES.length - 1 ? 'Next Case →' : '🎉 All Cases Done — Back to List';
+}
+
+function revealCase(c, chosen) {
+  const labels = ['A','B','C','D'];
+  document.querySelectorAll('.cs-opt').forEach((el, i) => {
+    el.classList.add('locked');
+    if (i === c.correct) el.classList.add('correct-show');
+    else if (i === chosen && i !== c.correct) el.classList.add('wrong-show');
+  });
+  const correct = chosen === c.correct;
+  const resEl = document.getElementById('cs-result');
+  resEl.className = 'cs-result ' + (correct ? 'ok' : 'no');
+  resEl.textContent = correct ? '✓ Correct!' : `✗ The answer was ${labels[c.correct]}`;
+  document.getElementById('cs-explain-text').textContent = c.explain;
+  document.getElementById('cs-explain').classList.add('show');
+}
+
+function nextCase() {
+  const idx = CASES.findIndex(x => x.id === CS.id);
+  if (idx < CASES.length - 1) openCase(CASES[idx + 1].id);
+  else { updateCSBar(); goCaseStudies(); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _tt;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 2300);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESET
+// ─────────────────────────────────────────────────────────────────────────────
+
+function confirmReset() {
+  if (confirm('Reset all progress? This cannot be undone.')) {
+    S = { streak:0, totalCorrect:0, totalAttempted:0, cards:{}, cases:{} };
+    save();
+    renderStatsBar();
+    renderCatGrid();
+    updateHomeCards();
+    toast('Progress reset', 'info');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
