@@ -1,0 +1,168 @@
+"""
+Synthetic MMM dataset generator for Pinewave Co. (Meridian exercise).
+
+Generates 104 weeks of media spend + revenue data with known ground-truth
+parameters so model output can be validated after the exercise.
+
+NOTE ON SCALE: Media spend (~$9.6M/year) is elevated relative to annual revenue
+(~$7–10M) for pedagogical clarity — it amplifies channel signal so the model can
+recover parameters in just 2 years of data. Real DTC brands typically spend 10–25%
+of revenue on media. Do not use these ratios as industry benchmarks.
+
+Ground truth (do not peek until after modeling):
+  TV ROI: 2.1x  | decay: 0.80 | saturation: Hill(k=100000, n=2.5)
+  Search ROI: 4.3x | decay: 0.35 | saturation: Hill(k=40000,  n=1.5)
+  Social ROI: 2.8x  | decay: 0.50 | saturation: Hill(k=60000,  n=2.0)
+  Display ROI: 1.4x | decay: 0.40 | saturation: Hill(k=30000,  n=3.0)
+  Baseline ~55% of revenue; holiday lift ~18%; price elasticity -0.6
+"""
+
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+SEED = 42
+N_WEEKS = 104
+START_DATE = "2022-01-03"  # Monday
+
+
+def hill(x, k, n):
+    """Hill saturation function: maps spend to [0, 1]."""
+    return x**n / (k**n + x**n)
+
+
+def apply_adstock(spend: np.ndarray, decay: float) -> np.ndarray:
+    """Geometric adstock: adstock[t] = spend[t] + decay * adstock[t-1]."""
+    adstock = np.zeros_like(spend, dtype=float)
+    for t in range(len(spend)):
+        adstock[t] = spend[t] + decay * (adstock[t - 1] if t > 0 else 0.0)
+    return adstock
+
+
+def generate_spend(rng, n, base, seasonal_amplitude, noise_scale):
+    """Generate realistic weekly spend with seasonality and noise."""
+    weeks = np.arange(n)
+    seasonal = 1.0 + seasonal_amplitude * np.sin(2 * np.pi * weeks / 52)
+    noise = rng.lognormal(mean=0, sigma=noise_scale, size=n)
+    spend = base * seasonal * noise
+    spend = np.clip(spend, 0, None)
+    return spend
+
+
+def main():
+    rng = np.random.default_rng(SEED)
+    dates = pd.date_range(start=START_DATE, periods=N_WEEKS, freq="W-MON")
+    weeks = np.arange(N_WEEKS)
+
+    # --- Media spend (dollars per week) ---
+    # TV: high base, strong seasonality peaking Q4
+    tv_spend = generate_spend(rng, N_WEEKS, base=80_000, seasonal_amplitude=0.40, noise_scale=0.18)
+    # Q4 boost (weeks 43-52 of each year)
+    for year_start in [0, 52]:
+        tv_spend[year_start + 43 : year_start + 52] *= 1.6
+
+    # Search: moderate base, Q4 spike, fast response
+    search_spend = generate_spend(rng, N_WEEKS, base=35_000, seasonal_amplitude=0.20, noise_scale=0.22)
+    for year_start in [0, 52]:
+        search_spend[year_start + 43 : year_start + 52] *= 1.4
+
+    # Social: mid-range, heavier in H1 (brand awareness cycles)
+    social_spend = generate_spend(rng, N_WEEKS, base=50_000, seasonal_amplitude=0.25, noise_scale=0.25)
+
+    # Display: lower base, more volatile
+    display_spend = generate_spend(rng, N_WEEKS, base=20_000, seasonal_amplitude=0.15, noise_scale=0.30)
+
+    # --- Adstock transformation ---
+    tv_ad      = apply_adstock(tv_spend,      decay=0.80)
+    search_ad  = apply_adstock(search_spend,  decay=0.35)
+    social_ad  = apply_adstock(social_spend,  decay=0.50)
+    display_ad = apply_adstock(display_spend, decay=0.40)
+
+    # --- Saturation via Hill function ---
+    tv_sat      = hill(tv_ad,      k=100_000, n=2.5)
+    search_sat  = hill(search_ad,  k=40_000,  n=1.5)
+    social_sat  = hill(social_ad,  k=60_000,  n=2.0)
+    display_sat = hill(display_ad, k=30_000,  n=3.0)
+
+    # --- Media contributions (ROI × max_possible_revenue per channel) ---
+    # Scale factors chosen so that at typical spend, media drives ~45% of revenue
+    tv_contrib      = tv_sat      * 2.1 * 100_000
+    search_contrib  = search_sat  * 4.3 *  60_000
+    social_contrib  = social_sat  * 2.8 *  80_000
+    display_contrib = display_sat * 1.4 *  40_000
+
+    # --- Baseline (organic) revenue ---
+    # Trend: slight upward growth over 2 years
+    trend = 1.0 + 0.0025 * weeks  # ~26% cumulative growth
+
+    # Seasonality: summer dip, Q4 peak
+    seasonality = (
+        1.0
+        + 0.12 * np.sin(2 * np.pi * weeks / 52)       # annual cycle
+        - 0.06 * np.sin(4 * np.pi * weeks / 52)        # bi-annual harmonic
+    )
+
+    # Price index: simulated competitive pricing pressure
+    # Slight downward drift with noise; values ~0.90–1.10
+    price_index = 1.0 - 0.001 * weeks + rng.normal(0, 0.015, N_WEEKS)
+    price_index = np.clip(price_index, 0.80, 1.15)
+
+    # Price effect on baseline (elasticity -0.6)
+    price_effect = price_index ** (-0.6)
+
+    # Holiday indicator (major US shopping weeks)
+    holiday = np.zeros(N_WEEKS, dtype=int)
+    holiday_week_offsets = [47, 51]  # Black Friday week, Christmas week
+    for yr in [0, 52]:
+        for w in holiday_week_offsets:
+            if yr + w < N_WEEKS:
+                holiday[yr + w] = 1
+
+    holiday_lift = 1.0 + 0.18 * holiday
+
+    baseline_level = 55_000  # weekly organic revenue at trend=1, price=1, no holiday
+    baseline = baseline_level * trend * seasonality * price_effect * holiday_lift
+
+    # --- Total revenue ---
+    revenue_true = baseline + tv_contrib + search_contrib + social_contrib + display_contrib
+
+    # Add observation noise (~5% CV)
+    noise = rng.normal(loc=1.0, scale=0.05, size=N_WEEKS)
+    revenue = np.maximum(revenue_true * noise, 1_000)  # floor at $1K
+
+    # --- Assemble DataFrame ---
+    df = pd.DataFrame({
+        "date":          dates.strftime("%Y-%m-%d"),
+        "revenue":       revenue.round(2),
+        "tv_spend":      tv_spend.round(2),
+        "search_spend":  search_spend.round(2),
+        "social_spend":  social_spend.round(2),
+        "display_spend": display_spend.round(2),
+        "price_index":   price_index.round(4),
+        "holiday":       holiday,
+        "trend":         trend.round(4),
+    })
+
+    out_path = Path(__file__).parent / "data" / "synthetic_mmm.csv"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_path, index=False)
+
+    # --- Summary stats ---
+    total_spend = (
+        df["tv_spend"].sum()
+        + df["search_spend"].sum()
+        + df["social_spend"].sum()
+        + df["display_spend"].sum()
+    )
+    print(f"Generated {len(df)} weeks of data → {out_path}")
+    print(f"\nRevenue:  min=${df['revenue'].min():,.0f}  max=${df['revenue'].max():,.0f}  mean=${df['revenue'].mean():,.0f}")
+    print(f"Total media spend over period: ${total_spend:,.0f}")
+    print(f"Total revenue over period:     ${df['revenue'].sum():,.0f}")
+    print(f"\nChannel spend mix:")
+    for ch in ["tv_spend", "search_spend", "social_spend", "display_spend"]:
+        pct = df[ch].sum() / total_spend * 100
+        print(f"  {ch:<15}: ${df[ch].sum():>12,.0f}  ({pct:.1f}%)")
+
+
+if __name__ == "__main__":
+    main()
