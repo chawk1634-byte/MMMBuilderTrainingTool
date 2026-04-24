@@ -1,0 +1,160 @@
+# generate_data.R
+# Synthetic MMM dataset generator for Pinewave Co. (Robyn exercise).
+#
+# Produces the same underlying brand scenario as the Meridian exercise
+# so results from both models can be compared. Because R and Python use
+# different random number generators, exact values differ from the Python
+# dataset — but distributions, scale, and ground-truth parameters are identical.
+#
+# NOTE ON SCALE: Media spend (~$9.6M/year) is elevated relative to annual revenue
+# (~$7-10M) for pedagogical clarity. Real DTC brands typically spend 10-25% of
+# revenue on media. Do not use these ratios as industry benchmarks.
+#
+# Ground truth (do not read until after modeling):
+#   TV ROI: 2.1x  | decay: 0.80 | saturation: Hill(k=100000, n=2.5)
+#   Search ROI: 4.3x | decay: 0.35 | saturation: Hill(k=40000,  n=1.5)
+#   Social ROI: 2.8x  | decay: 0.50 | saturation: Hill(k=60000,  n=2.0)
+#   Display ROI: 1.4x | decay: 0.40 | saturation: Hill(k=30000,  n=3.0)
+#   Baseline ~55% of revenue; holiday lift ~18%; price elasticity -0.6
+
+set.seed(42)
+
+N_WEEKS   <- 104
+START_DATE <- as.Date("2022-01-03")  # Monday
+
+weeks <- seq_len(N_WEEKS)
+dates <- START_DATE + (weeks - 1) * 7
+
+
+# ----- Helper functions -------------------------------------------------------
+
+hill <- function(x, k, n) {
+  x^n / (k^n + x^n)
+}
+
+apply_adstock <- function(spend, decay) {
+  adstock <- numeric(length(spend))
+  for (t in seq_along(spend)) {
+    prev <- if (t > 1) adstock[t - 1] else 0
+    adstock[t] <- spend[t] + decay * prev
+  }
+  adstock
+}
+
+gen_spend <- function(n, base, seasonal_amp, noise_scale) {
+  seasonal <- 1 + seasonal_amp * sin(2 * pi * seq_len(n) / 52)
+  noise     <- rlnorm(n, meanlog = 0, sdlog = noise_scale)
+  pmax(base * seasonal * noise, 0)
+}
+
+
+# ----- Media spend ------------------------------------------------------------
+
+tv_spend      <- gen_spend(N_WEEKS, base = 80000, seasonal_amp = 0.40, noise_scale = 0.18)
+search_spend  <- gen_spend(N_WEEKS, base = 35000, seasonal_amp = 0.20, noise_scale = 0.22)
+social_spend  <- gen_spend(N_WEEKS, base = 50000, seasonal_amp = 0.25, noise_scale = 0.25)
+display_spend <- gen_spend(N_WEEKS, base = 20000, seasonal_amp = 0.15, noise_scale = 0.30)
+
+# Q4 boost (weeks 44-52 of each year, 1-indexed)
+for (yr_start in c(0, 52)) {
+  boost_idx <- yr_start + 44:52
+  boost_idx <- boost_idx[boost_idx <= N_WEEKS]
+  tv_spend[boost_idx]     <- tv_spend[boost_idx]     * 1.6
+  search_spend[boost_idx] <- search_spend[boost_idx] * 1.4
+}
+
+
+# ----- Adstock ----------------------------------------------------------------
+
+tv_ad      <- apply_adstock(tv_spend,      decay = 0.80)
+search_ad  <- apply_adstock(search_spend,  decay = 0.35)
+social_ad  <- apply_adstock(social_spend,  decay = 0.50)
+display_ad <- apply_adstock(display_spend, decay = 0.40)
+
+
+# ----- Saturation (Hill) ------------------------------------------------------
+
+tv_sat      <- hill(tv_ad,      k = 100000, n = 2.5)
+search_sat  <- hill(search_ad,  k = 40000,  n = 1.5)
+social_sat  <- hill(social_ad,  k = 60000,  n = 2.0)
+display_sat <- hill(display_ad, k = 30000,  n = 3.0)
+
+
+# ----- Media contributions ----------------------------------------------------
+
+tv_contrib      <- tv_sat      * 2.1 * 100000
+search_contrib  <- search_sat  * 4.3 *  60000
+social_contrib  <- social_sat  * 2.8 *  80000
+display_contrib <- display_sat * 1.4 *  40000
+
+
+# ----- Baseline ---------------------------------------------------------------
+
+trend       <- 1 + 0.0025 * (weeks - 1)
+seasonality <- 1 + 0.12 * sin(2 * pi * weeks / 52) - 0.06 * sin(4 * pi * weeks / 52)
+price_index <- pmin(pmax(1 - 0.001 * (weeks - 1) + rnorm(N_WEEKS, 0, 0.015), 0.80), 1.15)
+price_effect <- price_index^(-0.6)
+
+# Holiday indicator (Black Friday week + Christmas week each year)
+holiday <- integer(N_WEEKS)
+for (yr_start in c(0, 52)) {
+  for (w in c(47, 51)) {
+    idx <- yr_start + w
+    if (idx <= N_WEEKS) holiday[idx] <- 1L
+  }
+}
+holiday_lift <- 1 + 0.18 * holiday
+
+baseline <- 55000 * trend * seasonality * price_effect * holiday_lift
+
+
+# ----- Total revenue ----------------------------------------------------------
+
+revenue_true <- baseline + tv_contrib + search_contrib + social_contrib + display_contrib
+noise        <- rnorm(N_WEEKS, mean = 1, sd = 0.05)
+revenue      <- pmax(revenue_true * noise, 1000)
+
+
+# ----- Assemble data frame ----------------------------------------------------
+# Column names match Robyn's expected format: DATE (capital) for the date variable
+
+df <- data.frame(
+  DATE          = format(dates, "%Y-%m-%d"),
+  revenue       = round(revenue, 2),
+  tv_spend      = round(tv_spend, 2),
+  search_spend  = round(search_spend, 2),
+  social_spend  = round(social_spend, 2),
+  display_spend = round(display_spend, 2),
+  price_index   = round(price_index, 4),
+  holiday       = holiday,
+  trend         = round(trend, 4),
+  stringsAsFactors = FALSE
+)
+
+
+# ----- Save -------------------------------------------------------------------
+
+out_dir  <- file.path(dirname(sys.frame(1)$ofile), "data")
+if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+
+out_path <- file.path(out_dir, "synthetic_mmm.csv")
+write.csv(df, out_path, row.names = FALSE)
+
+# Summary
+total_spend <- sum(df$tv_spend) + sum(df$search_spend) +
+               sum(df$social_spend) + sum(df$display_spend)
+
+cat(sprintf("Generated %d weeks of data -> %s\n", nrow(df), out_path))
+cat(sprintf("\nRevenue: min=$%s  max=$%s  mean=$%s\n",
+            format(round(min(df$revenue)), big.mark=","),
+            format(round(max(df$revenue)), big.mark=","),
+            format(round(mean(df$revenue)), big.mark=",")))
+cat(sprintf("Total media spend: $%s\n", format(round(total_spend), big.mark=",")))
+cat(sprintf("Total revenue:     $%s\n", format(round(sum(df$revenue)), big.mark=",")))
+
+cat("\nChannel spend mix:\n")
+for (ch in c("tv_spend","search_spend","social_spend","display_spend")) {
+  pct <- sum(df[[ch]]) / total_spend * 100
+  cat(sprintf("  %-15s $%s  (%.1f%%)\n", ch,
+              format(round(sum(df[[ch]])), big.mark=","), pct))
+}
