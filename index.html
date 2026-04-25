@@ -1188,8 +1188,8 @@ const QUIZZES = [
 {id:'qz22', cat:'MMM',
    q:'A TV campaign shows a 60% adstock rate. If it generated 100 incremental sales in week 1, approximately how many weeks until the weekly effect drops below 10 sales?',
    opts:['About 2 weeks','About 4 weeks','About 6 weeks','About 10 weeks'],
-   correct: 1,
-   explain:'With a 60% adstock rate, each week retains 60% of the prior week\'s effect: week 2 = 60, week 3 = 36, week 4 = 21.6, week 5 = 12.9, week 6 = 7.8. So the weekly effect drops below 10 around week 6, but the correct answer here is week 4 being roughly when meaningful decline is evident. At a 60% rate the half-life is about 1.4 weeks, so effects compound quickly — this is why total accumulated sales matter more than the duration alone.'},
+   correct: 2,
+   explain:'With a 60% adstock rate, each week retains 60% of the prior week\'s effect: week 2 = 60, week 3 = 36, week 4 = 21.6, week 5 = 12.9, week 6 = 7.8. The weekly effect drops below 10 in week 6 — so the answer is approximately 6 weeks. Note the half-life is only about 1.4 weeks (100 → 50 in ~1.4 weeks), but the tail extends well beyond that. This is why total accumulated revenue over the full adstock window matters more than just the first few weeks of response.'},
 
   {id:'qz23', cat:'MMM',
    q:'When high TV adstock causes lower-persistence channels like magazines to "disappear" from an MMM, what is the most likely explanation?',
@@ -1426,7 +1426,7 @@ const QUIZZES = [
    explain:'Lower-funnel channels position themselves at the end of the customer journey, capturing purchase intent that upstream channels created. A user who saw a TV ad, searched the brand, and clicked a branded search ad would likely have purchased anyway via direct navigation if branded search were unavailable. The conversion credit all flows to branded search in attribution. Properly modeling direct and indirect effects simultaneously — as sophisticated MMM does — reveals the true origin of that demand in the upper-funnel channel.'},
 
   {id:'qz62', cat:'Brand Health',
-   q:'Why does last-click attribution systematically undervalue brand search campaigns when evaluating true incrementality?',
+   q:'Why does last-click attribution systematically overvalue brand search campaigns when evaluating true incrementality?',
    opts:['Brand search has high CPCs relative to conversion value','Many clicks on brand ads would have converted through organic search anyway — last-click attributes the full conversion to the paid click, but turn-off experiments show much of that traffic is non-incremental','Brand search campaigns cannot be tracked with standard UTM parameters','Last-click over-credits brand search only on desktop, not mobile'],
    correct: 1,
    explain:'Brand search captures users who were already searching for your brand — intent that was often created by other marketing channels or by the brand\'s own reputation. Turn-off experiments (pausing brand search in test regions) consistently show that a large fraction of paid brand clicks simply shift to organic brand results, meaning the incremental value of the paid ad is far lower than last-click implies. Google\'s attribution tools are financially incentivized to overstate this credit.'},
@@ -1445,7 +1445,7 @@ const QUIZZES = [
 
   {id:'qz65', cat:'Brand Health',
    q:'A marketing executive wants to measure whether a brand\'s Share of Voice (SOV) investment is "working." Which combination of approaches provides the most complete picture?',
-   opts:['Platform impressions and CPM reports from the buying platform','A combination of HDYHAU surveys measuring prompted awareness, panel-based brand lift studies, and MMM-estimated brand contribution to baseline sales over time','Google Analytics direct traffic growth','Net Promoter Score surveys sent to existing customers'],
+   opts:['Platform impressions and CPM reports from the buying platform','A combination of HDYHAU surveys revealing self-reported discovery sources, panel-based brand lift studies, and MMM-estimated brand contribution to baseline sales over time','Google Analytics direct traffic growth','Net Promoter Score surveys sent to existing customers'],
    correct: 1,
    explain:'Each method captures a different dimension of brand health. HDYHAU surveys reveal whether customers are actually aware of the brand\'s advertising and associating it with the brand. Panel-based brand lift studies measure changes in unaided and aided awareness, consideration, and intent in target audiences. MMM can estimate how brand investment contributes to the organic baseline over time. No single metric captures all of these dimensions, and platform impression data only tells you reach, not perception change.'},
 
