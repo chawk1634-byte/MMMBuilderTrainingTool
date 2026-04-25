@@ -63,8 +63,8 @@ body {
 .home-title h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
 .home-title p { color: #94a3b8; font-size: 14px; max-width: 460px; margin: 0 auto; line-height: 1.55; }
 
-.mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-@media (max-width: 480px) { .mode-cards { grid-template-columns: 1fr; } }
+.mode-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+@media (max-width: 640px) { .mode-cards { grid-template-columns: 1fr; } }
 
 .mode-card {
   background: #1e293b;
@@ -510,6 +510,12 @@ body {
         <p>Real-world scenarios with 4-option multiple choice and detailed explanations.</p>
         <div class="count" id="cs-count-home">12 scenarios</div>
       </div>
+      <div class="mode-card" onclick="goQuiz()">
+        <div class="icon">⚡</div>
+        <h3>Quick Quiz</h3>
+        <p>Rapid-fire concept questions — how things work, why they fail, and what to do.</p>
+        <div class="count" id="qz-count-home">— questions</div>
+      </div>
     </div>
     <div class="home-progress">
       <div class="home-progress-header">
@@ -595,6 +601,33 @@ body {
     </div>
   </div>
 
+  <!-- ── QUIZ VIEW ── -->
+  <div class="view" id="view-quiz">
+    <div class="view-header">
+      <button class="btn-back" onclick="goHome()">← Home</button>
+      <h2>Quick Quiz</h2>
+      <span class="sub" id="qz-sub"></span>
+    </div>
+    <div class="cat-filters" id="qz-cat-filters"></div>
+    <div class="session-bar">
+      <span class="lbl">Progress</span>
+      <div class="bar"><div class="fill" id="qz-bar" style="width:0%"></div></div>
+      <span class="pct" id="qz-pct">0</span>
+    </div>
+    <div class="cs-scenario">
+      <div class="cs-s-tag" id="qz-cat-tag"></div>
+      <h3 id="qz-question-text" style="font-size:16px;line-height:1.5;"></h3>
+    </div>
+    <div class="cs-options" id="qz-opts"></div>
+    <button class="btn-submit" id="qz-submit" onclick="submitQuiz()" disabled>Submit Answer</button>
+    <div class="cs-explain" id="qz-explain">
+      <div class="cs-result" id="qz-result"></div>
+      <div class="cs-explain-lbl">Why This Matters</div>
+      <p id="qz-explain-text"></p>
+      <button class="btn-next-cs" id="qz-next-btn" onclick="nextQuiz()">Next Question →</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- Toast -->
@@ -619,30 +652,6 @@ const CARDS = [
     q:'What is a saturation curve in MMM and what does it tell you?',
     a:'A curve modeling the non-linear relationship between media spend and sales response. Two common shapes: (1) Diminishing returns (concave) — each additional dollar yields progressively less impact throughout; most channels behave this way in their observed spend range. (2) S-shaped (Hill function, n>1) — initial increasing returns at very low spend, then diminishing returns at higher spend. The saturation point is where marginal ROI approaches zero.',
     f:null },
-  { id:'mmm4', cat:'MMM',
-    q:'Bayesian vs frequentist MMM — what is the key difference?',
-    a:'Bayesian MMM incorporates prior beliefs (e.g., expected channel ROI ranges based on domain knowledge) and returns probability distributions for parameters, not just point estimates. More robust with limited or collinear data. Recast uses Bayesian MMM. Priors can substitute for data you don\'t have.',
-    f:null },
-  { id:'mmm5', cat:'MMM',
-    q:'What is multicollinearity in MMM and why is it a problem?',
-    a:'When two input variables are highly correlated over time (e.g., TV and digital spend always run in sync), making it very difficult to reliably isolate their individual effects — estimates become unstable and confidence intervals widen dramatically. It\'s not impossible (Bayesian priors constrain the solution space), but results are highly sensitive to prior choices. Mitigated by: deliberate variation in spend flighting, holdout tests, or strong informative priors.',
-    f:null },
-  { id:'mmm6', cat:'MMM',
-    q:'Model fit vs model accuracy in MMM — what is the difference?',
-    a:'Fit measures how well the model explains historical data (R²). Accuracy measures out-of-sample performance on holdout periods (MAPE, CRPS). High in-sample fit does NOT guarantee accuracy — overfit models fail on unseen data. Always evaluate MMM on a holdout, not just training data.',
-    f:null },
-  { id:'mmm7', cat:'MMM',
-    q:'What is time-varying ROI and why does it matter for MMM?',
-    a:'Channel ROI changes over time due to saturation, creative fatigue, competitive activity, or seasonality. A good MMM surfaces these shifts rather than reporting a single static coefficient averaged over 2+ years. Time-varying ROI prevents you from making budget decisions based on stale averages.',
-    f:null },
-  { id:'mmm8', cat:'MMM',
-    q:'What is model stability in MMM and how do you test for it?',
-    a:'A well-specified MMM produces consistent channel ROI estimates whether run on 12 or 18 months of data. Test by re-running on different time windows: if channel coefficients shift dramatically with small data additions, the model is overfit or using poorly chosen priors.',
-    f:null },
-  { id:'mmm9', cat:'MMM',
-    q:'Short-term vs long-term ROI in MMM — what is the difference?',
-    a:'Short-term ROI captures only in-period sales lift. Long-term ROI includes the extended adstock tail and brand equity buildup over months/years. TV and brand channels have disproportionately large long-term effects that short-term metrics miss entirely — often 2–5× the short-term figure.',
-    f:null },
   { id:'mmm10', cat:'MMM',
     q:'What is a DAG (Directed Acyclic Graph) in marketing measurement?',
     a:'A visual map of causal relationships between variables used to design unbiased models. Example: don\'t control for "branded search" when estimating TV effectiveness — branded search is a mediator (TV → search → sales). Controlling for a mediator removes the effect you\'re trying to measure.',
@@ -665,14 +674,6 @@ const CARDS = [
     q:'What is Data-Driven Attribution (DDA)?',
     a:'ML-based MTA using observed conversion paths (Shapley values or similar) to assign fractional credit based on which touchpoints increase conversion probability. More accurate than rule-based models, but still limited to tracked digital touchpoints only — blind to everything offline.',
     f:null },
-  { id:'mta4', cat:'MTA',
-    q:'Why does MTA systematically undercount TV and offline channels?',
-    a:'MTA relies on tracking pixels and device IDs. TV, radio, and OOH generate zero trackable touchpoints. Their contribution is invisible, so MTA over-attributes conversions to last-click digital channels that merely intercepted offline-driven demand. This is the core structural flaw of MTA.',
-    f:null },
-  { id:'mta5', cat:'MTA',
-    q:'How did iOS 14 (ATT framework) damage MTA accuracy?',
-    a:'Apple\'s App Tracking Transparency dramatically reduced user-level tracking on iOS (60–70% opt-out rates). Path-to-conversion data became incomplete, biasing models toward the trackable minority. MTA estimates based on partial path data are no longer representative of the full user population.',
-    f:null },
   { id:'mta6', cat:'MTA',
     q:'What is an attribution window and why does it matter?',
     a:'The time period after an ad exposure or click during which a conversion is credited to that touchpoint. Common defaults: 1-day view, 7-day click (Meta); 30-day click (Google). Shorter windows under-credit brand/awareness channels that influence decisions slowly over days or weeks. Longer windows over-credit channels running close to purchase. Different platforms use different defaults — making cross-platform ROAS comparisons actively misleading without harmonizing windows.',
@@ -691,22 +692,10 @@ const CARDS = [
     q:'What is a holdout group and why is it essential?',
     a:'A segment of users or geographic regions intentionally excluded from a campaign to serve as a counterfactual baseline. Measures what revenue would have occurred without the marketing. Without a holdout, you have no counterfactual — you\'re comparing against nothing.',
     f:null },
-  { id:'inc4', cat:'Incrementality',
-    q:'What is statistical significance in a lift test and why are lift tests often underpowered?',
-    a:'Significance is the probability the observed lift isn\'t due to random chance (target p < 0.05). Lift tests are frequently underpowered because: test/control groups must be large enough, run duration must be long enough, and the effect size must be large enough relative to baseline variance. Small tests often fail to detect real effects.',
-    f:null },
   { id:'inc5', cat:'Incrementality',
     q:'What is the counterfactual in incrementality testing?',
     a:'The estimated outcome that would have occurred if the marketing had not run. Never directly observed — estimated from the holdout group. Lift = Observed Outcome (treated) − Estimated Counterfactual (control). The quality of your counterfactual determines the validity of your lift estimate.',
     f:'Incremental Lift = Treated Outcome − Estimated Counterfactual' },
-  { id:'inc6', cat:'Incrementality',
-    q:'How should you prioritize which channels to test for incrementality first?',
-    a:'Test channels where: (1) reported ROAS is highest — most to lose if wrong, (2) you suspect attribution overcounting — retargeting, branded search, last-click channels, (3) spend is large enough to justify test cost. Rule of thumb: test the channels that would be most embarrassing if their incrementality turned out to be near zero.',
-    f:null },
-  { id:'inc7', cat:'Incrementality',
-    q:'What is statistical power and minimum detectable effect (MDE) in lift testing?',
-    a:'Statistical power = probability your test detects a true effect if one exists (target ≥80%). MDE = smallest lift the test is designed to detect. Under-powered tests are the most common lift-test failure mode — you run the test, see no significant lift, and incorrectly conclude the channel is ineffective. Before launching: calculate required sample size from your baseline conversion rate, expected lift %, desired confidence level, and available test/control population.',
-    f:'MDE ↓ requires: larger sample, longer test duration, or higher baseline CVR\nPower ≥ 80% at p < 0.05 is the standard threshold' },
 
   // CAC / LTV ────────────────────────────────────────────────────────────────
   { id:'cac1', cat:'CAC / LTV',
@@ -725,14 +714,6 @@ const CARDS = [
     q:'What is Payback Period?',
     a:'How long it takes to recoup CAC from a customer\'s gross margin contribution. Under 12 months = strong. 12–18 months = acceptable for well-capitalized businesses. 18+ months = risky without deep pockets or very high LTV. Critical for cash-constrained companies — long payback means slow capital recycling.',
     f:'Payback (months) = CAC / (ARPU × Gross Margin %)' },
-  { id:'cac5', cat:'CAC / LTV',
-    q:'Blended CAC vs channel-level CAC — when does each mislead you?',
-    a:'Blended CAC = all spend ÷ all new customers (including organic). Misleads when organic acquisition is strong — a flood of organic customers makes paid channels look efficient when they\'re not. Channel CAC misleads when attribution is broken (MTA over-credits last-touch) or when channels create demand that converts through other channels.',
-    f:null },
-  { id:'cac6', cat:'CAC / LTV',
-    q:'Why is LTV non-linear with respect to churn rate?',
-    a:'Because churn is the denominator. Small differences compound dramatically: 2% monthly churn → LTV = 50× (ARPU×GM); 5% → 20×; 10% → 10×. Reducing churn from 5% to 4% increases LTV by 25% — far more impactful than cutting CAC by 25%. Retention is usually the highest-ROI lever in unit economics.',
-    f:null },
 
   // Churn ────────────────────────────────────────────────────────────────────
   { id:'ch1', cat:'Churn',
@@ -746,10 +727,6 @@ const CARDS = [
   { id:'ch3', cat:'Churn',
     q:'What is a cohort retention curve and what does a healthy one look like?',
     a:'Tracks what % of a customer cohort (acquired in the same period) remains active over time. A healthy curve starts high, drops quickly in the first 1–3 months (early churn), then flattens into a long tail of loyal customers. Improving early-period retention has the highest LTV impact.',
-    f:null },
-  { id:'ch4', cat:'Churn',
-    q:'When churn spikes, what is the correct first diagnostic step?',
-    a:'Cohort analysis. Is the spike concentrated in recently acquired cohorts (→ acquisition quality issue: new channel, new audience, poor onboarding) or cross-cutting all cohorts (→ product change, price increase, competitive event)? Never assume it\'s a marketing problem until you isolate the cohort signature.',
     f:null },
 
   // Brand Health ─────────────────────────────────────────────────────────────
@@ -765,10 +742,6 @@ const CARDS = [
     q:'What is Share of Voice (SOV) and Excess Share of Voice (eSOV)?',
     a:'SOV = your ad spend ÷ total category ad spend. Excess SOV = SOV minus your current market share. Research from Binet & Field shows that positive eSOV predicts future market share growth — brands investing above share tend to grow. Negative eSOV predicts share erosion.',
     f:'eSOV = Share of Voice − Market Share    (positive = growth signal)' },
-  { id:'br4', cat:'Brand Health',
-    q:'How does brand equity show up in MMM?',
-    a:'Brand equity appears in the MMM baseline — the portion of sales not explained by current marketing activity. A strong brand maintains high baseline sales even when all paid media goes dark. MMM can\'t fully separate brand equity from pricing, distribution, or seasonality without careful model design.',
-    f:null },
   { id:'br5', cat:'Brand Health',
     q:'What is a Brand Lift Study?',
     a:'A survey-based study run alongside an ad campaign measuring changes in awareness, consideration, and purchase intent among exposed vs. unexposed audiences. Common on YouTube, Meta, CTV, and Linear TV (via panel matching). Measures upper-funnel impact but doesn\'t directly connect to revenue without additional modeling.',
@@ -779,25 +752,9 @@ const CARDS = [
     q:'What are GRPs (Gross Rating Points)?',
     a:'Measure of TV ad exposure = Reach% × Average Frequency. 100 GRPs could mean 100% of target reached once, or 50% reached twice. A media planning unit, not a revenue metric. Useful for comparing campaign weight across markets or time periods. The standard currency for buying and selling TV advertising.',
     f:'GRPs = Reach (%) × Average Frequency' },
-  { id:'tv2', cat:'TV Measurement',
-    q:'Reach vs frequency in TV — which matters more for brand building?',
-    a:'Reach matters more for brand building — you need to touch new people to grow the brand. Traditional media planning targeted ~3+ effective exposures (Krugman), but modern recency planning (Ephron) shifts focus to reaching the right audience near their purchase moment — even 1–2 exposures can outperform many exposures to the wrong audience at the wrong time. After ~70–80% reach saturation, additional spend buys frequency rather than new reach.',
-    f:null },
-  { id:'tv3', cat:'TV Measurement',
-    q:'How do iSpot and EDO measure TV effectiveness?',
-    a:'They correlate TV ad airings (second-level precision) with spikes in branded search queries, app downloads, or website traffic in the minutes immediately after a spot airs. Provides near-real-time TV attribution without user-level tracking. Measures engagement/response lift, not full revenue contribution — best paired with MMM.',
-    f:null },
-  { id:'tv4', cat:'TV Measurement',
-    q:'Why is MMM the gold standard for TV measurement?',
-    a:'TV has no digital tracking fingerprint, so MTA is blind to it. Simple before/after comparisons confound seasonality and competitive activity. MMM uses TV GRPs (or spend) as an input variable with adstock decay to estimate its causal contribution to sales over a full historical window — the only method that captures TV\'s full effect.',
-    f:null },
   { id:'tv5', cat:'TV Measurement',
     q:'What is the TV halo effect on digital channels?',
     a:'TV ads generate demand that surfaces through digital channels — branded search spikes after a TV spot airs, making paid search and organic look more effective. MTA over-credits those digital channels. A properly built MMM includes both TV GRPs and digital spend as separate variables, allowing TV\'s upstream contribution to be isolated.',
-    f:null },
-  { id:'tv6', cat:'TV Measurement',
-    q:'What is diminishing returns on TV reach and at what threshold does it typically kick in?',
-    a:'As TV spend increases, you first reach the most reachable audiences efficiently. After roughly 70–80% reach, additional spend buys more frequency on already-exposed viewers rather than new people. Incremental reach becomes very expensive. MMM saturation curves quantify this ceiling and identify the optimal GRP level.',
     f:null },
   { id:'tv7', cat:'TV Measurement',
     q:'CTV (Connected TV) vs Linear TV — how does measurement differ?',
@@ -817,14 +774,6 @@ const CARDS = [
     q:'What is iROAS (Incremental ROAS) and why does it differ from reported ROAS?',
     a:'ROAS calculated only on incrementally-caused revenue — revenue that wouldn\'t have existed without the marketing. Derived from MMM or lift tests. Almost always much lower than reported ROAS. A channel reporting 6x ROAS might have iROAS of 1.5x if most "attributed" conversions were organic or influenced by other channels.',
     f:'iROAS = Incremental Revenue / Ad Spend  (from MMM or lift test)' },
-  { id:'roas4', cat:'MER / ROAS',
-    q:'Why is ROAS especially misleading for brand and TV channels?',
-    a:'Brand channels build demand over time, not in the moment. ROAS only captures in-period revenue, missing long-term brand effects that materialize over months. TV generates no trackable touchpoints for MTA-based ROAS. Short-term ROAS for brand channels systematically understates their value — sometimes by 5× or more.',
-    f:null },
-  { id:'roas5', cat:'MER / ROAS',
-    q:'What is the "budget death spiral" caused by over-relying on MTA ROAS?',
-    a:'MTA shows high ROAS for lower-funnel/branded channels and low ROAS for upper-funnel. Budget shifts to lower-funnel → upper-funnel shrinks → fewer new people enter the consideration set → branded search demand declines → lower-funnel "performance" degrades 12–24 months later. The lag masks the cause until damage is done.',
-    f:null },
 ];
 
 
@@ -975,6 +924,269 @@ const CASES = [
   }
 ];
 
+const QUIZZES = [
+  // ── MMM ───────────────────────────────────────────────────────────────────
+  {
+    id:'qz1', cat:'MMM',
+    q:'Why do frequentist MMM models traditionally require 2+ years of historical data?',
+    opts:[
+      'They need enough data to test for statistical significance in A/B tests',
+      'They rely on observed variation alone — no priors — so they need enough data to estimate seasonal patterns, adstock, and channel effects without external knowledge',
+      'Two years is required by law for FTC marketing disclosure compliance',
+      'To calculate CAGR across at least two full fiscal years'
+    ],
+    correct:1,
+    explain:'Frequentist models have no mechanism to incorporate prior beliefs — all estimates come from observed variation in the data. Without 2+ years, you may not have enough variation to separate seasonal effects from channel effects, or to reliably estimate slow-decaying adstock tails. Bayesian MMM solves this by adding well-calibrated priors about channel ROI ranges and adstock decay, effectively "lending" the model domain knowledge when data is sparse.'
+  },
+  {
+    id:'qz2', cat:'MMM',
+    q:'What is multicollinearity and why is it a specific threat in MMM?',
+    opts:[
+      'When two channels spend the same dollar amount, making attribution impossible',
+      'When predictor variables are highly correlated — e.g., TV and radio always ramping up together — so the model can\'t isolate each channel\'s individual contribution',
+      'When a model\'s R² exceeds 0.95, indicating overfitting to historical noise',
+      'When the model includes more variables than weeks of data in the training set'
+    ],
+    correct:1,
+    explain:'If TV and radio always increase and decrease together (because they\'re managed as a single "brand budget"), a regression model cannot separate their individual effects. The coefficients become unstable — small data changes produce wildly different channel attributions. Solutions: Bayesian priors that constrain implausible values, variable reduction, or experimental hold-outs for one channel to create variation the model can learn from.'
+  },
+  {
+    id:'qz3', cat:'MMM',
+    q:'What does the "baseline" component of an MMM represent, and what is it NOT?',
+    opts:[
+      'The revenue directly caused by current paid media in the measurement window',
+      'The minimum revenue a company would achieve with zero marketing spend — driven by brand equity, organic SEO, distribution, repeat buyers, and seasonality — but NOT directly caused by current media',
+      'The model\'s error term, capturing unexplained variance in weekly sales',
+      'The benchmark ROAS a channel must beat to justify continued investment'
+    ],
+    correct:1,
+    explain:'The MMM baseline is the counterfactual floor — revenue estimated to occur even if you ran no paid media. It\'s driven by brand equity built over years, organic search, word of mouth, retail distribution, and loyal repeat customers. A strong brand has a high baseline, meaning most revenue is structural rather than media-driven. Critically, the baseline is NOT a direct output of current campaigns — conflating them leads to dramatically over-stating media contribution.'
+  },
+  {
+    id:'qz4', cat:'MMM',
+    q:'What is "out-of-sample validation" in MMM, and why does it matter more than in-sample R²?',
+    opts:[
+      'Testing the model on data from a different country to check international applicability',
+      'Withholding a recent time period from model training, then checking if the model accurately predicts that held-out period — a far stronger test of generalizability than R² on training data',
+      'Comparing MMM channel ROI estimates against MTA estimates for the same period',
+      'Running a separate A/B test after the model is built to validate its budget recommendations'
+    ],
+    correct:1,
+    explain:'A model can have near-perfect R² by overfitting to historical noise — memorizing quirks in the training data rather than learning real relationships. Out-of-sample validation forces an honest test: if you hide the last 8 weeks from training and the model predicts those weeks accurately, you have real confidence in its structure. High in-sample R² with poor out-of-sample performance is a red flag that the model won\'t generalize to future budget decisions.'
+  },
+  {
+    id:'qz5', cat:'MMM',
+    q:'Which variables should generally NOT be included as controls in MMM when estimating TV effectiveness — and why?',
+    opts:[
+      'Competitor pricing, because you can\'t control a competitor\'s decisions',
+      'Branded search volume, because it\'s a mediator — TV drives branded search, and controlling for it removes the effect you\'re trying to measure',
+      'Seasonality indices, because seasonality is already captured by the TV GRP flight timing',
+      'Weather variables, because they introduce noise rather than signal'
+    ],
+    correct:1,
+    explain:'Branded search is a mediator on the causal path from TV to sales: TV → branded search → conversions. Controlling for a mediator in a regression "blocks" the path you\'re trying to estimate — you\'d absorb TV\'s downstream effect into the search coefficient. This is a DAG (Directed Acyclic Graph) insight: you must think carefully about causal structure, not just statistical correlation, when selecting model variables. Seasonality and competitor pricing are valid controls because they\'re confounders, not mediators.'
+  },
+  {
+    id:'qz6', cat:'MMM',
+    q:'What role do Bayesian priors play in MMM, and what is the risk of poorly calibrated priors?',
+    opts:[
+      'Priors ensure the model converges faster by initializing gradient descent near the solution',
+      'Priors encode domain knowledge about plausible parameter ranges (e.g., "TV ROI is likely between 0.5x–3x"), allowing estimation with less data — but wrong priors can dominate the data and produce systematically biased results',
+      'Priors replace the need for holdout validation since they guarantee the model won\'t overfit',
+      'Priors are used only for channels with fewer than 12 months of spend history'
+    ],
+    correct:1,
+    explain:'Bayesian priors let you say "based on industry knowledge, paid social ROI is unlikely to be 15x" and encode that belief mathematically. This is enormously valuable with limited data. The risk: if priors are miscalibrated (too narrow, anchored on wrong benchmarks, or reflecting a vendor\'s commercial interest), the posterior estimate will be pulled toward the prior even when the data says otherwise. Always stress-test MMM by checking whether results change meaningfully when you loosen or tighten key priors.'
+  },
+  // ── MTA ───────────────────────────────────────────────────────────────────
+  {
+    id:'qz7', cat:'MTA',
+    q:'How did Apple\'s iOS 14 ATT (App Tracking Transparency) change the accuracy of MTA?',
+    opts:[
+      'It improved MTA accuracy by standardizing cross-device identifiers across platforms',
+      'It eliminated third-party cookies in iOS browsers, making web-based MTA obsolete',
+      'It allowed users to opt out of cross-app tracking, destroying the user-level journey data MTA depends on — especially for Meta/Facebook mobile campaigns — and making modeled conversions less reliable',
+      'It forced all attribution to shift to last-touch because probabilistic matching was banned'
+    ],
+    correct:2,
+    explain:'MTA requires stitching together a user\'s full ad exposure path across multiple touchpoints. ATT let iPhone users block the IDFA (Identifier for Advertisers) used to link exposures across apps. Opt-out rates exceeded 70–80% in many markets, meaning the majority of iOS user journeys became invisible to MTA. Meta in particular lost a large share of its conversion signal, forcing a shift toward modeled (statistical) conversions and making reported ROAS less reliable. This accelerated MMM adoption as the more robust measurement method.'
+  },
+  {
+    id:'qz8', cat:'MTA',
+    q:'Which of these marketing channels is MTA structurally incapable of measuring, regardless of tracking setup?',
+    opts:[
+      'Programmatic display ads served through a DSP with pixel tracking enabled',
+      'Email campaigns with UTM parameters and click tracking',
+      'National linear TV commercials that drive branded search behavior',
+      'Google Search ads with conversion tracking enabled'
+    ],
+    correct:2,
+    explain:'MTA can only measure channels where it can record a digital user-level touchpoint — an ad click, an impression pixel, a cookie drop. Linear TV has no such mechanism: viewers watch a spot passively, and there\'s no identifier to tie the TV exposure to a downstream conversion. MTA is therefore completely blind to TV\'s influence, even when TV is clearly driving branded search spikes and incremental revenue. The same blind spot applies to OOH, radio, and direct mail. Only MMM can attribute these channels.'
+  },
+  // ── Incrementality ────────────────────────────────────────────────────────
+  {
+    id:'qz9', cat:'Incrementality',
+    q:'What is Minimum Detectable Effect (MDE) in incrementality testing, and what determines it?',
+    opts:[
+      'The largest effect size a test could theoretically produce given infinite budget',
+      'The smallest true lift an experiment has sufficient statistical power to reliably detect, determined by sample size, baseline conversion rate, desired confidence level, and acceptable false positive/negative rates',
+      'The difference between MMM-estimated lift and MTA-estimated lift for the same channel',
+      'The minimum ROAS threshold above which a channel is considered incrementally valuable'
+    ],
+    correct:1,
+    explain:'MDE defines the boundary of what a test can realistically find. A test with low statistical power (small sample, low conversion rate, short duration) might only be able to detect a 20–30% lift — meaning a real 5% lift would go undetected. To reduce MDE, you need a larger holdout group, higher baseline conversion volume, or a longer test window. Always calculate MDE before running an incrementality test — designing a test that can\'t detect the effect size you care about is a waste of time and budget.'
+  },
+  {
+    id:'qz10', cat:'Incrementality',
+    q:'In a difference-in-differences (DiD) geo lift test, what assumption is most critical to validity?',
+    opts:[
+      'That test and control geos have identical population sizes',
+      'That the treatment is applied at exactly the same calendar time as a competing test',
+      'The parallel trends assumption: that in the absence of treatment, test and control geos would have followed the same trend — verified by checking pre-test period trajectories',
+      'That the holdout geos are geographically adjacent to test geos for clean comparisons'
+    ],
+    correct:2,
+    explain:'DiD estimates lift by comparing the change in test geos to the change in control geos. This is only valid if the two groups were trending similarly before the test — if they were diverging beforehand, the post-test divergence can\'t be attributed to the treatment. Pre-test trend analysis is the key diagnostic: plot test vs control geos for 8–12 weeks before launch and confirm they move together. If they don\'t, re-match geos or use synthetic control methods that explicitly account for pre-existing differences.'
+  },
+  {
+    id:'qz11', cat:'Incrementality',
+    q:'When should you use a geo lift test instead of a user-level holdout experiment?',
+    opts:[
+      'When the channel is digital and user-level randomization is technically feasible',
+      'When you want faster results, since geo tests always run for shorter durations',
+      'When user-level randomization isn\'t possible — e.g., for TV, CTV, OOH, or any channel where you can\'t withhold individual impressions — and when spillover between users makes user-level holdouts invalid',
+      'Only when the media budget exceeds $1M, since geo tests require large sample sizes'
+    ],
+    correct:2,
+    explain:'Geo tests are the right tool when you can\'t randomize at the user level. TV is the canonical example: you can\'t serve a TV spot to half the audience in a city. Instead, you fly the campaign in some DMAs and hold out others. The geo becomes the unit of analysis rather than the individual. Geographic "contamination" risk (people who see TV in a test geo traveling or discussing it with people in holdout geos) is the main threat — managed by choosing geographically distant or naturally bounded markets as holdout geos.'
+  },
+  // ── CAC / LTV ─────────────────────────────────────────────────────────────
+  {
+    id:'qz12', cat:'CAC / LTV',
+    q:'Your blended CAC is $80 and your paid CAC is $220. What does this gap most likely indicate?',
+    opts:[
+      'The paid attribution model has an error — both numbers should be the same',
+      'Strong organic acquisition is subsidizing the blended number; a flood of organic customers makes paid channels appear more efficient than they actually are',
+      'The company is overspending on brand — organic customers are always more valuable than paid',
+      'This gap is normal and both metrics should be tracked against the same benchmarks'
+    ],
+    correct:1,
+    explain:'Blended CAC = total spend ÷ all new customers, including organic (SEO, word of mouth, direct). When organic is strong, the denominator swells and the blended number looks low. Paid CAC isolates spend and customers from paid channels — a much truer read of what it costs to acquire a customer via advertising. The danger: if leadership benchmarks "CAC" using the blended number, they may dramatically over-invest in paid channels believing their efficiency is much better than it is. Always report both and explain the difference.'
+  },
+  {
+    id:'qz13', cat:'CAC / LTV',
+    q:'Monthly churn drops from 5% to 4%. By approximately how much does simple LTV increase?',
+    opts:[
+      'About 5% — proportional to the 1 percentage point improvement',
+      'About 10% — since churn fell by 20% of its original value',
+      'About 25% — because LTV = ARPU×GM / churn rate, so 5%→4% changes the denominator from 0.05 to 0.04, a 25% decrease, which inverts to a 25% LTV increase',
+      'About 50% — because the customer now stays twice as long on average'
+    ],
+    correct:2,
+    explain:'LTV = (ARPU × Gross Margin) / Churn Rate. At 5% churn: LTV = X / 0.05 = 20X. At 4% churn: LTV = X / 0.04 = 25X. The increase is (25X − 20X) / 20X = 25%. This non-linear relationship is why retention is often the highest-ROI lever in a subscription business. A similar 1pp improvement at lower starting churn (e.g., 2%→1%) produces an even more dramatic 100% LTV increase. Small absolute churn reductions compound into large LTV gains.'
+  },
+  // ── Churn ────────────────────────────────────────────────────────────────
+  {
+    id:'qz14', cat:'Churn',
+    q:'Monthly churn spikes from 3% to 6% over 6 weeks. What is the single most important first diagnostic to run?',
+    opts:[
+      'Survey all churned customers with an NPS exit questionnaire',
+      'Check if there\'s a tracking issue causing false churn events in the data pipeline',
+      'Run cohort analysis: is the spike concentrated in recently-acquired cohorts, or is it cross-cutting all customer vintages uniformly?',
+      'Immediately reduce paid acquisition spend to stop onboarding customers who will churn'
+    ],
+    correct:2,
+    explain:'Cohort analysis separates two very different problems. If the spike is concentrated in cohorts acquired in the past 60 days, it points to an acquisition quality change — a new channel, degraded onboarding, wrong audience segment, or a misleading offer. If it\'s cross-cutting all cohorts, the problem is likely a product change, price increase, competitive disruption, or macro factor affecting all customers equally. You need this diagnosis before deciding whether to change acquisition channels, improve onboarding, fix a product bug, or adjust pricing. Cutting spend before diagnosing the cause may destroy a healthy growth engine.'
+  },
+  // ── Brand Health ──────────────────────────────────────────────────────────
+  {
+    id:'qz15', cat:'Brand Health',
+    q:'In MMM, what does a persistently high "baseline" signal about a brand\'s health?',
+    opts:[
+      'That the MMM model is poorly specified and over-attributing revenue to the intercept',
+      'That the brand has strong structural demand — equity, loyalty, and organic presence — that generates revenue independent of current paid media activity',
+      'That seasonality is not properly controlled for in the model',
+      'That the brand has too little paid media and needs to increase investment to raise the baseline'
+    ],
+    correct:1,
+    explain:'The MMM baseline captures everything not explained by current media inputs — brand equity accumulated over years, organic SEO traffic, repeat purchase behavior, retail distribution, and word of mouth. A company with a 60–70% baseline is generating most of its revenue from structural brand strength, not from current campaign activity. This is a sign of health. Conversely, a brand with a declining baseline but strong short-term ROAS may be "harvesting" past brand investment without replenishing it — a warning sign that future revenue is at risk.'
+  },
+  // ── TV Measurement ────────────────────────────────────────────────────────
+  {
+    id:'qz16', cat:'TV Measurement',
+    q:'For brand-building TV campaigns, should you prioritize reach or frequency — and why?',
+    opts:[
+      'Frequency — more exposures per viewer drives stronger brand memory and purchase intent',
+      'Reach — brand growth requires consistently touching new people; once you\'ve saturated your current audience, additional frequency yields diminishing returns',
+      'They are equally important; modern media plans always target both at the same time',
+      'Frequency, because recency planning requires multiple exposures before purchase consideration activates'
+    ],
+    correct:1,
+    explain:'Recency planning theory (Erwin Ephron) argues that the most valuable impression is the one delivered closest to a purchase decision — and that single exposures to new audiences are often more effective than piling more frequency on already-exposed viewers. For brand growth, you need to reach new potential customers who don\'t yet know your brand. After roughly 70–80% reach saturation, additional spend buys frequency on already-exposed audiences with sharply diminishing returns. MMM saturation curves make this concrete: the marginal revenue per GRP falls as reach approaches its ceiling.'
+  },
+  {
+    id:'qz17', cat:'TV Measurement',
+    q:'How do iSpot and EDO attribute TV effectiveness without user-level tracking?',
+    opts:[
+      'They match set-top box data with first-party CRM purchases at the household level',
+      'They correlate TV ad airing timestamps (second-level precision) with spikes in branded search queries, app downloads, or site visits that occur in the minutes immediately following each spot — measuring near-real-time engagement lift',
+      'They use panel-based surveys of 10,000 households who report what TV ads they watched',
+      'They apply a fractional attribution model to TV GRPs using media-mix coefficients from the advertiser\'s MMM'
+    ],
+    correct:1,
+    explain:'iSpot and EDO track exactly when and where a TV spot aired, then look for statistically significant spikes in measurable digital behaviors (branded search, app store visits, website traffic) in the 0–5 minutes post-airing. This exploits the near-instant response mechanism — people who see a compelling TV ad often immediately reach for their phone to search or visit the brand\'s website. It\'s a clever way to measure TV impact without any user-level ID matching. The limitation: it captures immediate engagement response, not long-term sales impact. MMM is still needed to capture TV\'s full contribution over the adstock tail.'
+  },
+  {
+    id:'qz18', cat:'TV Measurement',
+    q:'Why can\'t MTA-based attribution measure TV, even with sophisticated cross-device tracking?',
+    opts:[
+      'TV impressions are too expensive to include in MTA models, which are designed for digital channels',
+      'TV viewing data is owned by Nielsen and can\'t be licensed for MTA use',
+      'Linear TV has no digital identifier — there\'s no cookie, device ID, or pixel to record a TV exposure and link it to a specific viewer\'s downstream digital behavior at the user level',
+      'MTA can measure CTV but not linear TV; the setup requires a custom integration with set-top box providers'
+    ],
+    correct:2,
+    explain:'MTA requires a trackable touchpoint for each channel exposure — a cookie drop, an impression pixel, a click. Linear TV delivers ads to passive viewers with no mechanism to record "this specific person, on this device, saw this spot at this timestamp." Without that linkage, there is no user journey to attribute. Even sophisticated cross-device graphs can\'t solve this for linear TV because the exposure event itself is never digitally recorded. This is a structural gap, not a data quality issue — making MMM and geo lift tests the only valid TV measurement approaches.'
+  },
+  {
+    id:'qz19', cat:'TV Measurement',
+    q:'At approximately what reach threshold does TV spend efficiency typically begin to decline sharply?',
+    opts:[
+      'Around 30–40% reach, because most high-value audiences are consumed early',
+      'Around 50% reach, which is the standard effective reach target in media planning',
+      'Around 70–80% reach, after which additional spend buys frequency on already-exposed audiences rather than new reach, and incremental GRPs become very expensive',
+      'Around 95% reach — TV is efficient up to near-complete saturation'
+    ],
+    correct:2,
+    explain:'The most reachable audiences are consumed first at the lowest CPM. As you push beyond 70–80% reach, you\'re fighting for audiences who watch less TV, watch at less predictable times, or are increasingly served by CTV/streaming rather than linear. The marginal cost of each incremental reach point rises sharply. MMM saturation curves visualize this: the incremental revenue contribution per additional TV GRP flattens and eventually approaches zero. This is why many MMM outputs recommend redistributing TV dollars to reach-extension in CTV rather than adding more linear GRPs.'
+  },
+  // ── MER / ROAS ────────────────────────────────────────────────────────────
+  {
+    id:'qz20', cat:'MER / ROAS',
+    q:'Why does channel-level ROAS systematically understate the value of brand and TV channels?',
+    opts:[
+      'Because TV and brand channels are typically bought at higher CPMs, inflating the denominator',
+      'Because ROAS platforms exclude organic revenue from the calculation',
+      'Because ROAS only captures in-period, directly attributed revenue — brand and TV channels build demand over months, generate halo effects on other channels, and influence conversions that surface through search or direct visits long after the exposure, none of which is credited back',
+      'Because TV and brand channels target too-broad audiences, diluting conversion rates'
+    ],
+    correct:2,
+    explain:'ROAS = attributed revenue / spend. For a performance channel like branded search, this captures most of the value — the click leads to an immediate, trackable conversion. For TV, a viewer who sees your spot may search for your brand two weeks later, visit your website after discussing it with a friend, or buy in-store — none of which gets credited to TV in any attribution system. Brand channels also generate long-term equity that sustains future conversion rates. This is why TV and brand channels consistently appear "inefficient" on ROAS when MMM and lift tests often show them as among the highest-iROAS channels in the portfolio.'
+  },
+  {
+    id:'qz21', cat:'MER / ROAS',
+    q:'What mechanism causes the "budget death spiral" when teams over-optimize on MTA ROAS?',
+    opts:[
+      'Paid search bids inflate over time as more budget competes for the same keywords, mechanically lowering ROAS',
+      'MTA platforms charge higher fees as budget scales, reducing net ROAS across all channels',
+      'Budget shifts from upper-funnel to lower-funnel because upper-funnel looks inefficient on MTA. Upper-funnel atrophies, new demand creation stops, branded search volume declines 12–24 months later, and even the "high-ROAS" lower-funnel channels eventually degrade as the pipeline of in-market customers shrinks',
+      'Lower-funnel channels become too expensive to operate at scale, forcing budget back to upper-funnel involuntarily'
+    ],
+    correct:2,
+    explain:'The death spiral works because branded search and retargeting appear highly efficient on MTA — they intercept demand already created by TV, display, social, and brand campaigns upstream. When teams shift budget to these "efficient" channels and cut upper-funnel, they\'re consuming existing demand without replacing it. 12–24 months later, fewer new people have been introduced to the brand, branded search demand falls, and the retargeting pools shrink. ROAS on those lower-funnel channels begins to degrade — but the cause (cutting upper-funnel years prior) is invisible in MTA. Only MMM correctly models the full-funnel causal chain.'
+  }
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -983,8 +1195,9 @@ let S = {
   streak: 0,
   totalCorrect: 0,
   totalAttempted: 0,
-  cards: {},   // { id: { consec: 0, mastered: false } }
-  cases: {}    // { id: { done: true, correct: bool, chosen: n } }
+  cards: {},    // { id: { consec: 0, mastered: false } }
+  cases: {},    // { id: { done: true, correct: bool, chosen: n } }
+  quizzes: {}   // { id: { done: true, correct: bool, chosen: n } }
 };
 
 // Flashcard session
@@ -992,6 +1205,9 @@ let FC = { cat:'All', deck:[], idx:0, flipped:false };
 
 // Case study session
 let CS = { id:null, chosen:null, submitted:false };
+
+// Quiz session
+let QZ = { cat:'All', deck:[], idx:0, chosen:null, submitted:false };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STORAGE
@@ -1043,6 +1259,8 @@ function updateHomeCards() {
   document.getElementById('fc-count-home').textContent = active + ' active / ' + CARDS.length + ' total';
   const done = Object.values(S.cases).filter(c => c.done).length;
   document.getElementById('cs-count-home').textContent = done + '/' + CASES.length + ' completed';
+  const qzDone = Object.values(S.quizzes).filter(q => q.done).length;
+  document.getElementById('qz-count-home').textContent = qzDone + '/' + QUIZZES.length + ' answered';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1075,6 +1293,15 @@ function goCaseStudies() {
   renderCaseList();
   updateCSBar();
   showView('view-cs-list');
+}
+
+function goQuiz() {
+  QZ.cat = 'All';
+  buildQuizDeck();
+  renderQuizCatFilters();
+  renderQuiz();
+  updateQZBar();
+  showView('view-quiz');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1324,12 +1551,155 @@ function toast(msg, type) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// QUIZ LOGIC
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildQuizDeck() {
+  let pool = QZ.cat === 'All'
+    ? [...QUIZZES]
+    : QUIZZES.filter(q => q.cat === QZ.cat);
+  // Unanswered questions first; shuffle within each group
+  const unanswered = pool.filter(q => !S.quizzes[q.id]?.done);
+  const answered   = pool.filter(q =>  S.quizzes[q.id]?.done);
+  QZ.deck = [
+    ...unanswered.sort(() => Math.random() - 0.5),
+    ...answered.sort(()   => Math.random() - 0.5)
+  ];
+  QZ.idx = 0;
+  QZ.chosen = null;
+  QZ.submitted = false;
+}
+
+function renderQuizCatFilters() {
+  const cats = ['All', ...new Set(QUIZZES.map(q => q.cat))];
+  document.getElementById('qz-cat-filters').innerHTML = cats.map(cat => {
+    const n = cat === 'All' ? QUIZZES.length : QUIZZES.filter(q => q.cat === cat).length;
+    return `<button class="cat-filter ${QZ.cat === cat ? 'active' : ''}" onclick="filterQuizCat('${cat}')">${cat} <span style="opacity:.55">${n}</span></button>`;
+  }).join('');
+}
+
+function filterQuizCat(cat) {
+  QZ.cat = cat;
+  buildQuizDeck();
+  renderQuizCatFilters();
+  renderQuiz();
+  updateQZBar();
+}
+
+function renderQuiz() {
+  const q = QZ.deck[QZ.idx];
+  if (!q) {
+    document.getElementById('qz-question-text').textContent = 'No questions available.';
+    return;
+  }
+
+  QZ.chosen = null;
+  QZ.submitted = false;
+
+  // Reset UI
+  document.getElementById('qz-cat-tag').textContent = q.cat;
+  document.getElementById('qz-question-text').textContent = q.q;
+  document.getElementById('qz-sub').textContent = (QZ.idx + 1) + ' / ' + QZ.deck.length;
+
+  const labels = ['A','B','C','D'];
+  document.getElementById('qz-opts').innerHTML = q.opts.map((o, i) =>
+    `<button class="cs-opt" onclick="chooseQuiz(${i})">
+      <span class="opt-lbl">${labels[i]}</span>${o}
+    </button>`
+  ).join('');
+
+  const sub = document.getElementById('qz-submit');
+  sub.disabled = true;
+  sub.textContent = 'Submit Answer';
+  document.getElementById('qz-explain').classList.remove('show');
+
+  // If already answered, restore result
+  const prog = S.quizzes[q.id];
+  if (prog?.done) {
+    revealQuiz(q, prog.chosen);
+    sub.disabled = true;
+    sub.textContent = prog.correct ? '✓ Correct!' : '✗ Incorrect';
+  }
+}
+
+function chooseQuiz(i) {
+  if (QZ.submitted) return;
+  QZ.chosen = i;
+  document.querySelectorAll('#qz-opts .cs-opt').forEach((el, j) => el.classList.toggle('selected', j === i));
+  document.getElementById('qz-submit').disabled = false;
+}
+
+function submitQuiz() {
+  if (QZ.chosen === null || QZ.submitted) return;
+  QZ.submitted = true;
+  const q = QZ.deck[QZ.idx];
+  const correct = QZ.chosen === q.correct;
+
+  if (!S.quizzes[q.id]?.done) {
+    S.quizzes[q.id] = { done: true, correct, chosen: QZ.chosen };
+    S.totalAttempted++;
+    if (correct) { S.totalCorrect++; S.streak++; }
+    else S.streak = 0;
+    save();
+    renderStatsBar();
+    updateHomeCards();
+  }
+
+  revealQuiz(q, QZ.chosen);
+  const sub = document.getElementById('qz-submit');
+  sub.disabled = true;
+  sub.textContent = correct ? '✓ Correct!' : '✗ Incorrect';
+
+  const nextBtn = document.getElementById('qz-next-btn');
+  nextBtn.textContent = QZ.idx < QZ.deck.length - 1 ? 'Next Question →' : '🎉 All Done — Restart';
+  updateQZBar();
+}
+
+function revealQuiz(q, chosen) {
+  const labels = ['A','B','C','D'];
+  document.querySelectorAll('#qz-opts .cs-opt').forEach((el, i) => {
+    el.classList.add('locked');
+    if (i === q.correct) el.classList.add('correct-show');
+    else if (i === chosen && i !== q.correct) el.classList.add('wrong-show');
+  });
+  const correct = chosen === q.correct;
+  const resEl = document.getElementById('qz-result');
+  resEl.className = 'cs-result ' + (correct ? 'ok' : 'no');
+  resEl.textContent = correct ? '✓ Correct!' : `✗ The answer was ${labels[q.correct]}`;
+  document.getElementById('qz-explain-text').textContent = q.explain;
+  document.getElementById('qz-explain').classList.add('show');
+}
+
+function nextQuiz() {
+  if (QZ.idx < QZ.deck.length - 1) {
+    QZ.idx++;
+    renderQuiz();
+    updateQZBar();
+    window.scrollTo(0, 0);
+  } else {
+    // Restart deck
+    buildQuizDeck();
+    renderQuiz();
+    updateQZBar();
+    toast('🔁 Deck restarted — keep drilling!', 'info');
+    window.scrollTo(0, 0);
+  }
+}
+
+function updateQZBar() {
+  const done = QZ.deck.filter(q => S.quizzes[q.id]?.done).length;
+  const pct = QZ.deck.length > 0 ? Math.round(done / QZ.deck.length * 100) : 0;
+  document.getElementById('qz-bar').style.width = pct + '%';
+  document.getElementById('qz-pct').textContent = done + '/' + QZ.deck.length + ' answered';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // RESET
 // ─────────────────────────────────────────────────────────────────────────────
 
 function confirmReset() {
   if (confirm('Reset all progress? This cannot be undone.')) {
-    S = { streak:0, totalCorrect:0, totalAttempted:0, cards:{}, cases:{} };
+    S = { streak:0, totalCorrect:0, totalAttempted:0, cards:{}, cases:{}, quizzes:{} };
     save();
     renderStatsBar();
     renderCatGrid();
