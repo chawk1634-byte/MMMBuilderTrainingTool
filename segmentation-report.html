@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shake Shack Consumer Segmentation Study | 2024</title>
+<title>Shake Shack Consumer Segmentation Study | 2026</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -388,8 +388,8 @@ const FACTORS = ['Quality\nConsciousness','Value\nOrientation','Experience\nSeek
 
 const XTAB_GROUPS = [
   { id:'demo', label:'Demographics', rows:[
-    { label:'Gender: Female',      total:52, vals:[48,62,44,46,58], sigs:['','ACDE','','','ABCD'] },
-    { label:'Age: 18–24',          total:18, vals:[28,10,12,22,35], sigs:['BCDE','','','BCE','ABCD'] },
+    { label:'Gender: Female',      total:52, vals:[48,62,44,46,58], sigs:['','ACDE','','','ACD'] },
+    { label:'Age: 18–24',          total:18, vals:[28,10,12,22,35], sigs:['BCD','','','BC','ABCD'] },
     { label:'Age: 25–34',          total:29, vals:[42,18,38,24,31], sigs:['BCDE','','BDE','','B'] },
     { label:'Age: 35–44',          total:28, vals:[20,38,30,28,22], sigs:['','ACDE','A','',''] },
     { label:'Age: 45–54',          total:25, vals:[10,34,20,26,12], sigs:['','ACDE','','A',''] },
@@ -409,26 +409,26 @@ const XTAB_GROUPS = [
     { label:'Avg spend $25–34',     total:26, vals:[38,34,22,10,28], sigs:['CDE','CD','D','','D'] },
     { label:'Avg spend $15–24',     total:35, vals:[26,36,40,34,38], sigs:['','A','A','A','A'] },
     { label:'Avg spend <$15',       total:23, vals:[8,10,26,52,18],  sigs:['','','AB','ABCE','A'] },
-    { label:'Mobile app user',      total:58, vals:[72,44,79,42,68], sigs:['BCDE','','ABDE','','BDE'] },
+    { label:'Mobile app user',      total:58, vals:[72,44,79,42,68], sigs:['BDE','','ABDE','','BDE'] },
     { label:'Orders via app',       total:34, vals:[41,22,55,24,38], sigs:['BDE','','ABDE','','BD'] },
-    { label:'Dines in',             total:31, vals:[38,42,18,28,32], sigs:['BCD','ACDE','','','CD'] },
+    { label:'Dines in',             total:31, vals:[38,42,18,28,32], sigs:['CD','ACDE','','','CD'] },
     { label:'Uses delivery',        total:22, vals:[15,24,18,28,20], sigs:['','A','','ACE',''] },
-    { label:'Buys LTO items',       total:41, vals:[52,32,38,28,71], sigs:['BCDE','','BD','','ABCD'] },
+    { label:'Buys LTO items',       total:41, vals:[52,32,38,28,71], sigs:['BCD','','BD','','ABCD'] },
   ]},
   { id:'attit', label:'Attitudinal (Index)', isIndex:true, rows:[
     { label:'Quality Consciousness', total:100, vals:[128,95,103,72,142],  sigs:['BCDE','','','','ABCD'] },
     { label:'Value Orientation',     total:100, vals:[68,95,88,162,74],    sigs:['','','','ABCE',''] },
-    { label:'Experience Seeking',    total:100, vals:[118,125,72,68,135],  sigs:['BCD','ACD','','','ABCD'] },
+    { label:'Experience Seeking',    total:100, vals:[118,125,72,68,135],  sigs:['CD','ACD','','','ABCD'] },
     { label:'Convenience Priority',  total:100, vals:[88,92,148,118,62],   sigs:['','','ABDE','ABE',''] },
     { label:'Social Influence',      total:100, vals:[112,82,88,72,168],   sigs:['BD','','','','ABCD'] },
   ]},
   { id:'funnel', label:'Brand Funnel', rows:[
-    { label:'Aware of Shake Shack',      total:84, vals:[98,82,90,76,97],  sigs:['BCDE','','BDE','','BCD'] },
-    { label:'Ever visited',              total:71, vals:[92,68,78,58,88],  sigs:['BCDE','','BDE','','ABCD'] },
-    { label:'Visited past 3 months',     total:54, vals:[78,48,70,42,64],  sigs:['BCDE','','BDE','','BDE'] },
-    { label:'Prefer over competitors',   total:38, vals:[62,32,44,20,58],  sigs:['BCDE','','BDE','','ABCD'] },
-    { label:'NPS: Promoter (9–10)',       total:44, vals:[52,38,48,28,74],  sigs:['BDE','','BD','','ABCD'] },
-    { label:'NPS: Detractor (0–6)',       total:18, vals:[10,20,14,32,8],   sigs:['','A','','ABCE',''] },
+    { label:'Aware of Shake Shack',      total:88, vals:[98,82,90,76,97],  sigs:['BCD','','BD','','BCD'] },
+    { label:'Ever visited',              total:76, vals:[92,68,78,58,88],  sigs:['BCDE','','BD','','BCD'] },
+    { label:'Visited past 3 months',     total:60, vals:[78,48,70,42,64],  sigs:['BCDE','','BDE','','BD'] },
+    { label:'Prefer over competitors',   total:42, vals:[62,32,44,20,58],  sigs:['BCDE','','BD','','BCD'] },
+    { label:'NPS: Promoter (9–10)',       total:47, vals:[52,38,48,28,74],  sigs:['BD','','BD','','ABCD'] },
+    { label:'NPS: Detractor (0–6)',       total:17, vals:[10,20,14,32,8],   sigs:['','A','','ABCE',''] },
   ]},
 ];
 
@@ -436,7 +436,7 @@ const COMP_ROWS = [
   { label:"McDonald's",   total:68, vals:[48,72,62,88,54], sigs:['','A','','ABCE',''] },
   { label:"Chick-fil-A",  total:52, vals:[46,58,50,62,48], sigs:['','A','','ABCE',''] },
   { label:"Five Guys",    total:41, vals:[52,38,36,45,44], sigs:['BCDE','','','BC','BC'] },
-  { label:"Chipotle",     total:64, vals:[72,58,68,52,76], sigs:['BDE','','BD','','BDE'] },
+  { label:"Chipotle",     total:64, vals:[72,58,68,52,76], sigs:['BD','','BD','','BCD'] },
   { label:"In-N-Out*",    total:31, vals:[36,24,32,38,28], sigs:['B','','B','ABE',''] },
   { label:"Wendy's",      total:44, vals:[32,48,40,58,36], sigs:['','AC','','ABCE',''] },
 ];
