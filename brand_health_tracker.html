@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shake Shack Brand Health Tracker — Q1 2026</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red:    #C81026;
+  --ink:    #1a1a1e;
+  --panel:  #252529;
+  --panel2: #2e2e33;
+  --cream:  #e8e0d5;
+  --white:  #ffffff;
+  --muted:  #9ca3af;
+  --border: #3a3a3f;
+  --bg:     #f8f7f5;
+  --card:   #ffffff;
+  --rule:   #e2e0dc;
+  --body:   #3d3d42;
+  --green:  #34d399;
+  --amber:  #f59e0b;
+}
+html { background: var(--bg); scroll-behavior: smooth; }
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── Top bar ─────────────────────────────────── */
+.topbar {
+  background: var(--ink);
+  border-bottom: 3px solid var(--red);
+  height: 58px;
+  display: flex; align-items: center;
+  padding: 0 48px;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 200;
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--cream);
+}
+.topbar-dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--red);
+  display: flex; align-items: center; justify-content: center;
+}
+.topbar-dot::after { content:''; width:12px; height:12px; border-radius:50%; background:#fff; }
+.topbar-meta { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
+
+/* ── Section nav ─────────────────────────────── */
+.section-nav {
+  background: var(--card);
+  border-bottom: 1px solid var(--rule);
+  display: flex; padding: 0 48px; gap: 0;
+  position: sticky; top: 61px; z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  overflow-x: auto;
+}
+.nav-btn {
+  padding: 14px 20px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  border: none; background: none; cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  text-decoration: none; display: block;
+}
+.nav-btn:hover { color: var(--ink); }
+.nav-btn.active { color: var(--red); border-bottom-color: var(--red); }
+
+/* ── Page layout ─────────────────────────────── */
+.page { max-width: 1200px; margin: 0 auto; padding: 48px 48px 96px; }
+
+/* ── Section wrapper ─────────────────────────── */
+.section { margin-bottom: 56px; scroll-margin-top: 120px; }
+
+/* ── Section header ──────────────────────────── */
+.section-hdr { margin-bottom: 24px; }
+.section-eyebrow {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.section-eyebrow .rule { width: 32px; height: 2px; background: var(--red); }
+.section-eyebrow span {
+  font-size: 11px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--red);
+}
+.section-title {
+  font-size: 26px; font-weight: 800; color: var(--ink);
+  letter-spacing: -.3px; margin-bottom: 4px;
+}
+.section-sub { font-size: 14px; color: var(--muted); max-width: 680px; }
+
+/* ── Chart panel ─────────────────────────────── */
+.chart-panel {
+  background: var(--ink);
+  border-radius: 10px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+}
+.chart-panel-title {
+  font-size: 14px; font-weight: 700; color: var(--cream);
+  margin-bottom: 4px; letter-spacing: .2px;
+}
+.chart-panel-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+
+/* ── Light card ──────────────────────────────── */
+.light-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+}
+.light-card-title {
+  font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px;
+}
+.light-card-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+/* ── Grid helpers ────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+/* ── KPI card ────────────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px;
+  position: relative; overflow: hidden;
+}
+.kpi-card.alert { border-color: var(--red); }
+.kpi-card.on-track { border-color: #34d399; }
+.kpi-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.kpi-value { font-size: 24px; font-weight: 800; color: var(--white); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.kpi-delta { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.kpi-delta.up { color: var(--green); }
+.kpi-delta.flat { color: var(--muted); }
+.kpi-delta.down { color: var(--red); }
+.kpi-target { font-size: 11px; color: var(--muted); }
+.kpi-alert-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: var(--red); color: white;
+  font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  padding: 2px 6px; border-radius: 10px; text-transform: uppercase;
+}
+
+/* ── Insight box ─────────────────────────────── */
+.insight {
+  background: var(--panel2);
+  border-left: 3px solid var(--red);
+  border-radius: 0 6px 6px 0;
+  padding: 14px 18px;
+  font-size: 13.5px; color: var(--cream);
+  line-height: 1.6; margin-top: 16px;
+}
+.insight strong { color: var(--white); }
+.insight.light {
+  background: #faf9f7; border-left-color: var(--red);
+  color: var(--body);
+}
+.insight.light strong { color: var(--ink); }
+
+/* ── Legend ──────────────────────────────────── */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px;
+}
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.legend-swatch { width: 20px; height: 3px; border-radius: 2px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── Table ───────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  background: var(--ink); color: var(--cream);
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 10px 14px; text-align: left;
+}
+.data-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.data-table tr:nth-child(even) td { background: #faf9f7; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table .num { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+
+/* ── Survey question ─────────────────────────── */
+.q-block { margin-bottom: 20px; border-bottom: 1px solid var(--rule); padding-bottom: 20px; }
+.q-block:last-child { border-bottom: none; padding-bottom: 0; }
+.q-num { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--red); margin-bottom: 4px; }
+.q-text { font-size: 14.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px; line-height: 1.4; }
+.q-format { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.q-rationale { font-size: 12.5px; color: var(--body); line-height: 1.5; }
+.q-options { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.q-opt { font-size: 11px; padding: 3px 10px; background: #f3f4f6; border-radius: 12px; color: var(--body); }
+
+/* ── Outcomes card ───────────────────────────── */
+.outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.outcome-card {
+  background: var(--card); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 20px;
+  border-top: 4px solid var(--red);
+}
+.outcome-card .oc-metric { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.outcome-card .oc-move { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.outcome-card .oc-chain { font-size: 12.5px; color: var(--body); line-height: 1.7; margin-bottom: 12px; }
+.outcome-card .oc-impact { font-size: 22px; font-weight: 800; color: var(--red); }
+.outcome-card .oc-impact-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.formula-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.formula-pill {
+  background: #f3f4f6; border-radius: 4px;
+  padding: 4px 10px; font-size: 12px; font-family: monospace;
+  color: var(--ink);
+}
+.formula-op { font-size: 14px; color: var(--muted); font-weight: 700; }
+.formula-result { background: #fee2e2; color: var(--red); font-weight: 700; }
+
+/* ── Appendix ────────────────────────────────── */
+.appendix-section {
+  background: var(--card); border: 1px solid var(--rule);
+  border-radius: 8px; margin-bottom: 16px; overflow: hidden;
+}
+.appendix-toggle {
+  width: 100%; padding: 16px 20px;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  text-align: left;
+}
+.appendix-toggle:hover { background: #faf9f7; }
+.appendix-toggle .toggle-arrow { font-size: 12px; color: var(--muted); transition: transform .2s; }
+.appendix-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.appendix-body { display: none; padding: 0 20px 20px; }
+.appendix-body.open { display: block; }
+
+/* ── Bar helpers ─────────────────────────────── */
+.bar-wrap { display: flex; align-items: center; gap: 10px; }
+.bar-bg { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; }
+
+svg { overflow: visible; display: block; }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR ══════════════════════════════════ -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-dot"></div>
+    Shake Shack — Brand Health Tracker
+  </div>
+  <div class="topbar-meta">Q1 2026 WAVE · CONTINUOUS n=200/wk · QUARTERLY n=1,000 · CONFIDENTIAL</div>
+</div>
+
+<!-- ═══ NAV ══════════════════════════════════════ -->
+<nav class="section-nav">
+  <a href="#scorecard"    class="nav-btn active">01 Executive Scorecard</a>
+  <a href="#funnel"       class="nav-btn">02 Brand Funnel</a>
+  <a href="#competitive"  class="nav-btn">03 Competitive Benchmarking</a>
+  <a href="#segments"     class="nav-btn">04 Health by Segment</a>
+  <a href="#outcomes"     class="nav-btn">05 Business Outcomes Model</a>
+  <a href="#instrument"   class="nav-btn">06 Survey Instrument</a>
+  <a href="#appendix"     class="nav-btn">07 Data Appendix</a>
+</nav>
+
+<div class="page">
+
+<!-- ═══ S1: SCORECARD ════════════════════════════ -->
+<section class="section" id="scorecard">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 01</span></div>
+    <div class="section-title">Executive Scorecard</div>
+    <div class="section-sub">Weekly CMO view. Current period vs. prior period, vs. full-year target, and vs. alert threshold. Red border = at-risk metric.</div>
+  </div>
+
+  <div class="kpi-row" id="kpi-row"></div>
+
+  <div class="chart-panel">
+    <div class="chart-panel-title">6-Quarter Trend — Key Brand Metrics</div>
+    <div class="chart-panel-sub">Q2 2024 through Q1 2026. Dashed = target floor. Metrics indexed separately.</div>
+    <svg id="trend-chart" width="100%" viewBox="0 0 1100 260"></svg>
+    <div class="legend" id="trend-legend"></div>
+  </div>
+</section>
+
+<!-- ═══ S2: FUNNEL ═══════════════════════════════ -->
+<section class="section" id="funnel">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 02</span></div>
+    <div class="section-title">Brand Funnel Analysis</div>
+    <div class="section-sub">Percentage of US adults 18-54 at each funnel stage. Conversion rates show the drop-off between each stage.</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-panel">
+      <div class="chart-panel-title">Brand Funnel — Q1 2026</div>
+      <div class="chart-panel-sub">% of target population (US adults 18-54, QSR purchasers)</div>
+      <svg id="funnel-chart" width="100%" viewBox="0 0 480 380"></svg>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-title">Funnel — Q1 2026 vs. Q1 2025</div>
+      <div class="chart-panel-sub">Year-over-year change at each funnel stage</div>
+      <svg id="funnel-yoy" width="100%" viewBox="0 0 480 380"></svg>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>Key finding:</strong> The Familiarity-to-Consideration conversion (54% familiar, 31% considering) is the most significant funnel gap. Among guests who are familiar with the brand, only 57% actively consider it for their next visit. This is not an awareness problem — it is a relevance and occasion-fit problem. Increasing consideration among already-familiar guests is the highest-leverage brand investment available.
+  </div>
+</section>
+
+<!-- ═══ S3: COMPETITIVE ══════════════════════════ -->
+<section class="section" id="competitive">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 03</span></div>
+    <div class="section-title">Competitive Benchmarking</div>
+    <div class="section-sub">Shake Shack vs. five key competitors. Brand equity dimensions (top-2-box %) and funnel comparison.</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-panel">
+      <div class="chart-panel-title">Brand Equity Radar — Q1 2026</div>
+      <div class="chart-panel-sub">Top-2-box score on each dimension. Shake Shack highlighted in red.</div>
+      <svg id="radar-chart" width="100%" viewBox="0 0 480 380"></svg>
+      <div class="legend" id="radar-legend"></div>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-title">Funnel Comparison vs. Competitive Set</div>
+      <div class="chart-panel-sub">Shake Shack (red) vs. category average (gray) at each funnel stage</div>
+      <svg id="comp-funnel" width="100%" viewBox="0 0 480 380"></svg>
+    </div>
+  </div>
+
+  <div class="light-card">
+    <div class="light-card-title">Competitive Position Summary</div>
+    <div class="light-card-sub">Where Shake Shack leads, matches, and trails the competitive set</div>
+    <div id="comp-summary-table"></div>
+  </div>
+
+  <div class="insight light">
+    <strong>Strategic read:</strong> Shake Shack leads the competitive average on Quality Perception (74% vs. 64% avg) and Differentiation (62% vs. 53% avg) — the two dimensions that justify premium pricing. Note: In-N-Out scores higher on both dimensions (78% quality, 64% differentiation), though its footprint is limited to the Western US. The critical vulnerability is Value Perception (38%), where Shake Shack trails all five competitors. This is not a quality problem; it is a price-framing and communication problem. Guests believe the food is better. They are not yet convinced it is worth the premium. That gap is addressable through messaging, portion framing, and value-tier menu architecture — not by lowering prices.
+  </div>
+</section>
+
+<!-- ═══ S4: SEGMENTS ═════════════════════════════ -->
+<section class="section" id="segments">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 04</span></div>
+    <div class="section-title">Brand Health by Guest Segment</div>
+    <div class="section-sub">Brand funnel and equity metrics broken out by the five CRM-defined guest segments. Connects brand perception to behavioral value. <strong>Note:</strong> segment metrics reflect the identified active guest base — not the general US adult population — so values are structurally higher than overall KPI figures.</div>
+  </div>
+
+  <div class="chart-panel">
+    <div class="chart-panel-title">Segment Brand Health Heatmap</div>
+    <div class="chart-panel-sub">Darker red = higher score. Values shown as top-2-box % or index. Segments sorted by overall brand health score.</div>
+    <svg id="seg-heatmap" width="100%" viewBox="0 0 1100 320"></svg>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-panel">
+      <div class="chart-panel-title">Awareness-to-Consideration Gap by Segment</div>
+      <div class="chart-panel-sub">% who are aware (gray) vs. % who consider (red). Wider gap = greater conversion opportunity.</div>
+      <svg id="seg-gap" width="100%" viewBox="0 0 480 280"></svg>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-title">NPS and Value Perception by Segment</div>
+      <div class="chart-panel-sub">NPS (bars) and Value Perception score (line). Segments sorted by NPS.</div>
+      <svg id="seg-nps" width="100%" viewBox="0 0 480 280"></svg>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>The Value Skeptic gap:</strong> Value Skeptics show 44% unaided awareness — meaningfully above average — but only 22% consideration. That 22-point awareness-to-consideration gap is the largest in the portfolio and is driven almost entirely by Value Perception scores of 28%, the lowest of any segment. Value Skeptics know who Shake Shack is. They have decided it is not for them, primarily on price grounds. This is a communications challenge, not a product challenge — and it is different from the broader value problem because this segment specifically anchors on price-per-item comparisons rather than experience value. The intervention is not a discount; it is a reframe.
+  </div>
+</section>
+
+<!-- ═══ S5: OUTCOMES ═════════════════════════════ -->
+<section class="section" id="outcomes">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 05</span></div>
+    <div class="section-title">Business Outcomes Model</div>
+    <div class="section-sub">Quantified linkages between brand metric improvements and downstream revenue impact. All assumptions are shown and can be challenged.</div>
+  </div>
+
+  <div class="outcome-grid" id="outcome-cards"></div>
+
+  <div class="light-card" style="margin-top:20px;">
+    <div class="light-card-title">Sensitivity Table — Revenue Impact by Metric Improvement Size</div>
+    <div class="light-card-sub">Annual revenue impact ($M) at each improvement level. Assumes $12.50 average check, 4.2 annual visits for retained customer, 28M target population.</div>
+    <table class="data-table" id="sensitivity-table"></table>
+  </div>
+
+  <div class="insight light">
+    <strong>Key implication:</strong> A 5-point improvement in Consideration drives an estimated $6.0M in annual incremental revenue — more than a 10-point NPS improvement. This is because consideration operates at the top of the acquisition funnel, where the leverage on new trial is highest. Brands that underinvest in brand-building because it does not appear in attribution models are systematically ignoring the highest-ROI driver in this model.
+  </div>
+</section>
+
+<!-- ═══ S6: INSTRUMENT ═══════════════════════════ -->
+<section class="section" id="instrument">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 06</span></div>
+    <div class="section-title">Survey Instrument</div>
+    <div class="section-sub">15-question battery used for the continuous tracking panel and quarterly deep-dive waves. Screener, brand funnel, equity dimensions, NPS, and open-end.</div>
+  </div>
+
+  <div class="light-card" id="survey-screener">
+    <div class="light-card-title">Screener</div>
+    <div class="light-card-sub">Applied before all questions. Non-qualifiers are terminated.</div>
+    <div id="screener-qs"></div>
+  </div>
+
+  <div class="light-card" id="survey-main">
+    <div class="light-card-title">Main Questionnaire</div>
+    <div class="light-card-sub">Administered to all qualifiers. Brand list is randomized except for NPS and open-end, which are Shake Shack-specific.</div>
+    <div id="main-qs"></div>
+  </div>
+</section>
+
+<!-- ═══ S7: APPENDIX ═════════════════════════════ -->
+<section class="section" id="appendix">
+  <div class="section-hdr">
+    <div class="section-eyebrow"><div class="rule"></div><span>Section 07</span></div>
+    <div class="section-title">Data Appendix</div>
+    <div class="section-sub">All underlying mock data used to generate this report. Click any section to expand.</div>
+  </div>
+  <div id="appendix-container"></div>
+</section>
+
+</div><!-- end .page -->
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATA LAYER
+// ══════════════════════════════════════════════════
+
+const COMPETITORS = ['Shake Shack','McDonald\'s','Five Guys','Chipotle','Chick-fil-A','In-N-Out'];
+const COMP_COLORS = ['#C81026','#f59e0b','#3b82f6','#10b981','#8b5cf6','#06b6d4'];
+const COMP_SHORT  = ['SS','MCD','FG','CMG','CFA','IN-N'];
+
+const SEGMENTS = ['Brand Advocate','Urban Enthusiast','Lunch Regular','Occasional Treater','Value Skeptic'];
+const SEG_COLORS = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444'];
+const SEG_PCT    = [17, 19, 21, 23, 20];
+
+// Brand funnel (% of 18-54 QSR purchasers)
+const FUNNEL_STAGES = ['Aided\nAwareness','Ever\nVisited','Familiarity','Consideration','Past-90d\nVisit','Preference'];
+const FUNNEL_CURRENT = [82, 58, 54, 31, 24, 19];
+const FUNNEL_YOY     = [81, 57, 52, 30, 23, 18]; // Q1 2025
+
+// Competitive funnel (Aided Awareness, Consideration, Past-90d, NPS)
+const COMP_FUNNEL = {
+  'Unaided Awareness': [38,94,52,71,68,44],
+  'Consideration':     [31,68,44,58,61,48],
+  'Past-90d Visit':    [24,71,31,44,48,28],
+  'NPS':               [44,12,38,41,68,62],
+};
+
+// Brand equity dimensions (top-2-box %)
+const EQUITY_DIMS = ['Quality\nPerception','Value\nPerception','Occasion\nFit','Emotional\nConnection','Differentiation','Accessibility'];
+const EQUITY_VALS = {
+  'Shake Shack': [74, 38, 49, 52, 62, 41],
+  'McDonald\'s':  [31, 52, 74, 28, 34, 89],
+  'Five Guys':    [71, 44, 52, 44, 48, 54],
+  'Chipotle':     [68, 54, 68, 58, 61, 71],
+  'Chick-fil-A':  [72, 61, 71, 74, 58, 68],
+  'In-N-Out':     [78, 58, 54, 61, 64, 38],
+};
+
+// KPI scorecard
+const KPI_DATA = [
+  { label:'Unaided Awareness', val:'38%', raw:38, prior:37, target:42, alert:36, dir:'up', status:'ok' },
+  { label:'Familiarity Index', val:'54%', raw:54, prior:53, target:58, alert:50, dir:'up', status:'ok' },
+  { label:'Consideration',     val:'31%', raw:31, prior:30, target:34, alert:28, dir:'up', status:'ok' },
+  { label:'Past-90d Visit',    val:'24%', raw:24, prior:24, target:28, alert:21, dir:'flat', status:'watch' },
+  { label:'Preference',        val:'19%', raw:19, prior:18, target:22, alert:16, dir:'up', status:'ok' },
+  { label:'NPS',               val:'+44', raw:44, prior:43, target:48, alert:39, dir:'up', status:'ok' },
+  { label:'Value Perception',  val:'38%', raw:38, prior:37, target:45, alert:33, dir:'up', status:'watch' },
+];
+
+// 6-quarter trends
+const QUARTERS = ['Q2 2024','Q3 2024','Q4 2024','Q1 2025','Q2 2025','Q1 2026'];
+const TREND_DATA = [
+  { label:'Unaided Awareness', color:'#C81026',  target:42, values:[37,38,37,38,38,38] },
+  { label:'Consideration',     color:'#3b82f6',  target:34, values:[30,31,30,31,31,31] },
+  { label:'NPS (÷2 for scale)',color:'#f59e0b',  target:24, values:[21,22,21.5,22,22,22] },
+  { label:'Value Perception',  color:'#10b981',  target:45, values:[36,37,36,38,38,38] },
+];
+
+// Segment brand health
+const SEG_METRICS = ['Unaided Aware','Consideration','Past-90d','Quality Percep.','Value Percep.','NPS'];
+const SEG_HEALTH = {
+  'Brand Advocate':    [72, 68, 81, 94, 62, 82],
+  'Urban Enthusiast':  [64, 58, 74, 88, 48, 71],
+  'Lunch Regular':     [54, 42, 62, 78, 44, 52],
+  'Occasional Treater':[48, 34, 28, 71, 52, 44],
+  'Value Skeptic':     [44, 22, 18, 58, 28, 18],
+};
+
+// Business outcomes model
+const OUTCOME_DATA = [
+  {
+    metric: 'Unaided Awareness',
+    move: '+1 percentage point',
+    chain: [
+      '28M target population × 1% = 280,000 new aware adults',
+      '280K × 35% consideration rate among aware = 98,000 new considerers',
+      '98K × 18% trial rate among considerers = 17,640 new trial visits',
+      '17,640 × $12.50 avg check = $220,500 direct',
+      'Annualized with 1.8× repeat factor = ~$397K'
+    ],
+    impact: '$0.4M',
+    note: 'Annual incremental revenue per +1pp awareness'
+  },
+  {
+    metric: 'Consideration Rate',
+    move: '+1 percentage point',
+    chain: [
+      '28M target population × 1% = 280,000 new considerers',
+      '280K × 18% trial conversion = 50,400 new trial visits',
+      '50,400 × $12.50 avg check = $630,000 direct',
+      'Annualized with 1.8× repeat factor for converters = ~$1.1M',
+      '+1pp consideration → +0.003 incremental visits/year across active base → 7,200 additional visits → ~$90K'
+    ],
+    impact: '$1.2M',
+    note: 'Annual incremental revenue per +1pp consideration'
+  },
+  {
+    metric: 'NPS',
+    move: '+10 points',
+    chain: [
+      'Current active base: ~2.4M guests visited past 12 months',
+      '+10 NPS → +4pp 90-day retention improvement (from regression analysis)',
+      '2.4M × 4% = 96,000 additional retained guests',
+      '96K × $12.50 × 4.2 annual visits = $5.04M direct',
+      'Advocacy lift: +10 NPS → +1.2% referral rate → ~28,800 new trial visits'
+    ],
+    impact: '$5.4M',
+    note: 'Annual incremental revenue per +10 NPS points'
+  },
+  {
+    metric: 'Value Perception',
+    move: '+5 percentage points',
+    chain: [
+      '+5pp value perception → +0.8% visit frequency among existing guests',
+      '2.4M guests × 0.8% frequency lift = 19,200 additional annual visits',
+      '19,200 × $12.50 = $240,000 direct',
+      '+5pp value perception → +2.1pp consideration among currently non-considering aware',
+      '2.1pp consideration lift = $2.5M (see consideration model above)'
+    ],
+    impact: '$2.8M',
+    note: 'Annual incremental revenue per +5pp value perception'
+  },
+];
+
+// Sensitivity table
+const SENSITIVITY_METRICS = ['Awareness (+pp)','Consideration (+pp)','NPS (+pts)','Value Perception (+pp)'];
+const SENSITIVITY_SIZES    = [1, 3, 5, 10];
+const SENSITIVITY_RATES    = [0.4, 1.2, 0.54, 0.56]; // $M per unit
+
+// Survey questions
+const SCREENER_QS = [
+  {
+    num: 'S1',
+    text: 'In the past 3 months, have you visited any restaurant for a meal or snack? Please select all that apply.',
+    format: 'Multi-select checklist',
+    options: ['Sit-down / full service restaurant','QSR burger restaurant (e.g., McDonald\'s, Five Guys)','Fast casual restaurant (e.g., Chipotle, Shake Shack)','Pizza delivery or carry-out','Coffee shop or café','None of the above'],
+    rationale: 'Qualifies respondents as active QSR/fast-casual purchasers. Must select QSR burger or fast casual to continue.'
+  },
+  {
+    num: 'S2',
+    text: 'How often do you typically visit a QSR or fast-casual burger restaurant?',
+    format: 'Single-select',
+    options: ['Weekly or more often','2-3 times per month','About once a month','Less than once a month','Rarely or never'],
+    rationale: 'Frequency qualifier. Respondents selecting "rarely or never" are terminated.'
+  },
+];
+
+const MAIN_QS = [
+  {
+    num: 'Q1',
+    text: 'When you think of burger or fast-casual restaurants, which brands come to mind? Please type as many as you can think of.',
+    format: 'Open text — first mention coded separately (top-of-mind awareness)',
+    rationale: 'Captures unaided brand awareness. First mention = top-of-mind awareness. All mentions = unaided awareness. The order matters: brands listed first indicate stronger mental availability.'
+  },
+  {
+    num: 'Q2',
+    text: 'Which of the following burger or fast-casual restaurant brands are you aware of? Select all that apply.',
+    format: 'Multi-select, brand list randomized, includes "None of the above"',
+    options: ['Shake Shack','McDonald\'s','Five Guys','Chipotle','Chick-fil-A','In-N-Out Burger','Whataburger','Smashburger','Other (please specify)'],
+    rationale: 'Captures aided awareness. Net of Q1 responses to avoid double-counting. Establishes the denominator for all downstream conversion calculations.'
+  },
+  {
+    num: 'Q3',
+    text: 'For each brand you selected in Q2, how well do you feel you know this brand?',
+    format: '7-point scale: 1 = "I have heard of it but know nothing about it" to 7 = "I know it extremely well." Top-2-box = Familiarity.',
+    rationale: 'Measures brand familiarity beyond mere name recognition. A brand with high aided awareness but low familiarity has an education problem, not an awareness problem.'
+  },
+  {
+    num: 'Q4',
+    text: 'Thinking about your next burger or fast-casual meal, which of the following brands would you consider visiting? Select all that apply.',
+    format: 'Multi-select from aware brands only (piped from Q2)',
+    rationale: 'Unaided consideration. Asked before any brand-specific questions to avoid priming. The gap between familiarity (Q3) and consideration (Q4) is the single most diagnostic metric in the tracker.'
+  },
+  {
+    num: 'Q5',
+    text: 'Which of the following burger or fast-casual brands have you ever visited in person?',
+    format: 'Multi-select from aware brands',
+    rationale: 'Establishes the ever-visited base. Combined with Q6 to calculate active vs. lapsed ratios.'
+  },
+  {
+    num: 'Q6',
+    text: 'Which of these brands have you visited in the past 90 days?',
+    format: 'Multi-select from ever-visited brands (piped from Q5)',
+    rationale: 'Recency measure. 90-day window aligns with quarterly visit cycle for most QSR guests and avoids over-counting occasional visitors as active.'
+  },
+  {
+    num: 'Q7',
+    text: 'If you could visit any one burger or fast-casual restaurant for your next meal right now, which would you choose?',
+    format: 'Single-select from consideration set (piped from Q4)',
+    rationale: 'Forces a preference choice within the consideration set. More predictive of actual visit behavior than unconstrained preference questions.'
+  },
+  {
+    num: 'Q8-Q13',
+    text: 'Now thinking specifically about [BRAND], please rate your agreement with each of the following statements.',
+    format: '7-point agreement scale (1 = Strongly Disagree, 7 = Strongly Agree). Top-2-box reported. Asked for Shake Shack and any brands visited in Q5.',
+    options: [
+      'Q8: [Brand] uses higher-quality ingredients than most QSR and fast-casual restaurants.',
+      'Q9: [Brand] is worth what I pay for it.',
+      'Q10: [Brand] fits naturally into my regular dining routine.',
+      'Q11: [Brand] is a brand I feel good about supporting.',
+      'Q12: [Brand] is clearly different from other burger and fast-casual restaurants.',
+      'Q13: It is easy and convenient for me to visit [Brand] when I want to.',
+    ],
+    rationale: 'Six brand equity dimensions: Quality Perception, Value Perception, Occasion Fit, Emotional Connection, Differentiation, and Accessibility. Tracking these over time identifies which equity dimensions are driving or dragging brand momentum.'
+  },
+  {
+    num: 'Q14',
+    text: 'How likely are you to recommend Shake Shack to a friend or colleague? Use a scale from 0 (Not at all likely) to 10 (Extremely likely).',
+    format: 'NPS 0-10 scale. Promoters = 9-10, Passives = 7-8, Detractors = 0-6.',
+    rationale: 'Asked only for Shake Shack. NPS is a leading indicator of word-of-mouth acquisition and 90-day retention. Tracked weekly in the continuous pulse.'
+  },
+  {
+    num: 'Q15',
+    text: 'In your own words, what is the one thing that would most increase how often you visit Shake Shack?',
+    format: 'Open text, verbatim. Text analysis applied quarterly to identify themes.',
+    rationale: 'The qualitative signal that explains movements in quantitative metrics. Quarterly text analysis of this question provides the "why" behind metric changes that no quantitative battery can fully capture.'
+  },
+];
+
+
+// ══════════════════════════════════════════════════
+//  RENDERERS
+// ══════════════════════════════════════════════════
+
+// KPI Row
+(function() {
+  const row = document.getElementById('kpi-row');
+  row.innerHTML = KPI_DATA.map(k => {
+    const deltaText = k.dir === 'up' ? `+1pp vs. prior period` : k.dir === 'flat' ? `Flat vs. prior period` : `-1pp vs. prior period`;
+    const deltaClass = k.dir === 'up' ? 'up' : k.dir === 'flat' ? 'flat' : 'down';
+    const borderClass = k.status === 'watch' ? 'alert' : '';
+    const badge = k.status === 'watch' ? '<div class="kpi-alert-badge">Watch</div>' : '';
+    return `<div class="kpi-card ${borderClass}">
+      ${badge}
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.val}</div>
+      <div class="kpi-delta ${deltaClass}">${deltaText}</div>
+      <div class="kpi-target">Target: ${k.target}${k.label==='NPS'?'':k.label.includes('NPS')?'':k.label==='NPS'?'':''} · Alert: ${k.alert}${k.label.includes('NPS')?'':''}</div>
+    </div>`;
+  }).join('');
+})();
+
+// Trend chart
+(function() {
+  const svg = document.getElementById('trend-chart');
+  const vW = 1100, vH = 260;
+  const pad = { top: 20, right: 180, bottom: 40, left: 42 };
+  const cW = vW - pad.left - pad.right;
+  const cH = vH - pad.top - pad.bottom;
+  const n = QUARTERS.length;
+  const xScale = i => pad.left + (i / (n-1)) * cW;
+  const yScale = v => pad.top + cH - ((v - 18) / (50 - 18)) * cH;
+
+  let html = '';
+  // Grid
+  for (let y = 20; y <= 50; y += 5) {
+    const cy = yScale(y);
+    html += `<line x1="${pad.left}" y1="${cy}" x2="${pad.left+cW}" y2="${cy}" stroke="#3a3a3f" stroke-width="1"/>`;
+    html += `<text x="${pad.left-6}" y="${cy+4}" fill="#9ca3af" font-size="10" text-anchor="end">${y}</text>`;
+  }
+  QUARTERS.forEach((q, i) => {
+    const cx = xScale(i);
+    html += `<text x="${cx}" y="${pad.top+cH+16}" fill="#9ca3af" font-size="11" text-anchor="middle">${q}</text>`;
+  });
+
+  TREND_DATA.forEach(series => {
+    // Target dashed line
+    const ty = yScale(series.target);
+    html += `<line x1="${pad.left}" y1="${ty}" x2="${pad.left+cW}" y2="${ty}" stroke="${series.color}" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>`;
+    // Main line
+    const pts = series.values.map((v, i) => `${xScale(i)},${yScale(v)}`).join(' ');
+    html += `<polyline points="${pts}" fill="none" stroke="${series.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    series.values.forEach((v, i) => {
+      html += `<circle cx="${xScale(i)}" cy="${yScale(v)}" r="4" fill="${series.color}"/>`;
+    });
+    // End label
+    const lastX = xScale(n-1);
+    const lastY = yScale(series.values[n-1]);
+    html += `<text x="${lastX+10}" y="${lastY+4}" fill="${series.color}" font-size="11" font-weight="700">${series.label}</text>`;
+  });
+
+  html += `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+cH}" stroke="#6b7280" stroke-width="1.5"/>`;
+  html += `<line x1="${pad.left}" y1="${pad.top+cH}" x2="${pad.left+cW}" y2="${pad.top+cH}" stroke="#6b7280" stroke-width="1.5"/>`;
+  svg.innerHTML = html;
+
+  const leg = document.getElementById('trend-legend');
+  leg.innerHTML = TREND_DATA.map(s =>
+    `<span class="legend-item"><span class="legend-swatch" style="background:${s.color}"></span>${s.label}</span>` +
+    `<span class="legend-item"><span class="legend-swatch" style="background:${s.color};opacity:.4;border-top:2px dashed ${s.color}"></span>Target</span>`
+  ).join('');
+})();
+
+// Brand funnel chart
+(function() {
+  const svg = document.getElementById('funnel-chart');
+  const vW = 480, vH = 380;
+  const pad = { top: 10, right: 20, bottom: 20, left: 90 };
+  const cW = vW - pad.left - pad.right;
+  const barH = 32, gap = 12;
+  const maxVal = 100;
+
+  let html = '';
+  FUNNEL_STAGES.forEach((stage, i) => {
+    const v = FUNNEL_CURRENT[i];
+    const y = pad.top + i * (barH + gap);
+    const bw = (v / maxVal) * cW;
+    // Conversion rate
+    let convText = '';
+    if (i > 0) {
+      const prev = FUNNEL_CURRENT[i-1];
+      const conv = Math.round((v / prev) * 100);
+      convText = `<text x="${pad.left - 6}" y="${y + barH/2 + 4}" fill="#6b7280" font-size="10" text-anchor="end">${conv}% of prior</text>`;
+    }
+    const label = stage.replace('\n',' ');
+    html += `<rect x="${pad.left}" y="${y}" width="${bw}" height="${barH}" fill="#C81026" rx="3" opacity="${0.55 + (v/100)*0.45}"/>`;
+    html += `<text x="${pad.left + bw + 6}" y="${y+barH/2+4}" fill="#e8e0d5" font-size="13" font-weight="700">${v}%</text>`;
+    html += `<text x="${pad.left - 8}" y="${y+barH/2+4}" fill="#9ca3af" font-size="11" text-anchor="end">${label}</text>`;
+    if (i > 0 && i < FUNNEL_STAGES.length) {
+      const prevV = FUNNEL_CURRENT[i-1];
+      const conv = Math.round((v / prevV) * 100);
+      const arrowY = y - gap/2;
+      html += `<text x="${pad.left + 4}" y="${arrowY + 3}" fill="#6b7280" font-size="9" font-style="italic">${conv}% convert</text>`;
+    }
+  });
+  svg.innerHTML = html;
+})();
+
+// Funnel YoY chart
+(function() {
+  const svg = document.getElementById('funnel-yoy');
+  const vW = 480, vH = 380;
+  const pad = { top: 10, right: 100, bottom: 20, left: 90 };
+  const cW = vW - pad.left - pad.right;
+  const barH = 14, groupGap = 20;
+
+  let html = '';
+  FUNNEL_STAGES.forEach((stage, i) => {
+    const cur = FUNNEL_CURRENT[i];
+    const yoy = FUNNEL_YOY[i];
+    const maxV = 100;
+    const groupY = pad.top + i * (barH * 2 + groupGap);
+    const label = stage.replace('\n',' ');
+    // Prior year bar
+    html += `<rect x="${pad.left}" y="${groupY}" width="${(yoy/maxV)*cW}" height="${barH}" fill="#4b5563" rx="2"/>`;
+    html += `<text x="${pad.left + (yoy/maxV)*cW + 4}" y="${groupY+barH-2}" fill="#9ca3af" font-size="11">${yoy}%</text>`;
+    // Current bar
+    html += `<rect x="${pad.left}" y="${groupY+barH+2}" width="${(cur/maxV)*cW}" height="${barH}" fill="#C81026" rx="2"/>`;
+    html += `<text x="${pad.left + (cur/maxV)*cW + 4}" y="${groupY+barH+barH}" fill="#e8e0d5" font-size="11" font-weight="700">${cur}%</text>`;
+    // Delta
+    const delta = cur - yoy;
+    const dText = delta >= 0 ? `+${delta}pp` : `${delta}pp`;
+    const dColor = delta >= 0 ? '#34d399' : '#f87171';
+    html += `<text x="${vW - 16}" y="${groupY+barH+6}" fill="${dColor}" font-size="12" font-weight="700" text-anchor="end">${dText}</text>`;
+    // Label
+    html += `<text x="${pad.left - 8}" y="${groupY+barH+4}" fill="#9ca3af" font-size="11" text-anchor="end">${label}</text>`;
+  });
+
+  // Legend
+  html += `<rect x="${pad.left}" y="${vH-14}" width="10" height="10" rx="2" fill="#4b5563"/>`;
+  html += `<text x="${pad.left+14}" y="${vH-5}" fill="#9ca3af" font-size="10">Q2 2024</text>`;
+  html += `<rect x="${pad.left+70}" y="${vH-14}" width="10" height="10" rx="2" fill="#C81026"/>`;
+  html += `<text x="${pad.left+84}" y="${vH-5}" fill="#e8e0d5" font-size="10">Q2 2025</text>`;
+  svg.innerHTML = html;
+})();
+
+// Radar chart
+(function() {
+  const svg = document.getElementById('radar-chart');
+  const cx = 220, cy = 190, R = 140;
+  const dims = EQUITY_DIMS;
+  const n = dims.length;
+  const angleStep = (2 * Math.PI) / n;
+
+  function getPoint(i, val, maxVal) {
+    const angle = i * angleStep - Math.PI / 2;
+    const r = (val / maxVal) * R;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  }
+
+  let html = '';
+  // Grid rings
+  [25, 50, 75, 100].forEach(pct => {
+    const pts = dims.map((_, i) => {
+      const p = getPoint(i, pct, 100);
+      return `${p.x},${p.y}`;
+    }).join(' ');
+    html += `<polygon points="${pts}" fill="none" stroke="#3a3a3f" stroke-width="1"/>`;
+    if (pct <= 75) html += `<text x="${cx+4}" y="${cy - (pct/100)*R - 2}" fill="#6b7280" font-size="9">${pct}</text>`;
+  });
+
+  // Axes and labels
+  dims.forEach((dim, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const ax = cx + R * Math.cos(angle), ay = cy + R * Math.sin(angle);
+    html += `<line x1="${cx}" y1="${cy}" x2="${ax}" y2="${ay}" stroke="#3a3a3f" stroke-width="1"/>`;
+    const lx = cx + (R + 22) * Math.cos(angle), ly = cy + (R + 22) * Math.sin(angle);
+    const anchor = Math.abs(Math.cos(angle)) < 0.1 ? 'middle' : Math.cos(angle) > 0 ? 'start' : 'end';
+    const label = dim.replace('\n', ' ');
+    html += `<text x="${lx}" y="${ly + 4}" fill="#9ca3af" font-size="11" text-anchor="${anchor}">${label}</text>`;
+  });
+
+  // Data polygons — draw SS last so it's on top
+  const drawOrder = ['McDonald\'s','Five Guys','Chipotle','Chick-fil-A','In-N-Out','Shake Shack'];
+  drawOrder.forEach(brand => {
+    const vals = EQUITY_VALS[brand];
+    const pts = vals.map((v, i) => { const p = getPoint(i, v, 100); return `${p.x},${p.y}`; }).join(' ');
+    const color = COMP_COLORS[COMPETITORS.indexOf(brand)];
+    const isss = brand === 'Shake Shack';
+    html += `<polygon points="${pts}" fill="${color}" fill-opacity="${isss ? 0.25 : 0.07}" stroke="${color}" stroke-width="${isss ? 2.5 : 1.2}" opacity="${isss ? 1 : 0.6}"/>`;
+    if (isss) {
+      vals.forEach((v, i) => {
+        const p = getPoint(i, v, 100);
+        html += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${color}"/>`;
+      });
+    }
+  });
+
+  svg.innerHTML = html;
+
+  // Legend
+  const leg = document.getElementById('radar-legend');
+  leg.innerHTML = COMPETITORS.map((c, i) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${COMP_COLORS[i]}"></span>${c}</span>`
+  ).join('');
+})();
+
+// Competitive funnel grouped bar
+(function() {
+  const svg = document.getElementById('comp-funnel');
+  const vW = 480, vH = 380;
+  const funnelKeys = ['Unaided Awareness','Consideration','Past-90d Visit','NPS'];
+  const maxVals = [100, 100, 100, 100];
+  const pad = { top: 16, right: 20, bottom: 44, left: 52 };
+  const cW = vW - pad.left - pad.right;
+  const cH = vH - pad.top - pad.bottom;
+  const barW = cW / funnelKeys.length * 0.48;
+  const compAvgColor = '#4b5563';
+
+  let html = '';
+  // Y grid
+  for (let y = 0; y <= 100; y += 25) {
+    const cy = pad.top + cH - (y/100)*cH;
+    html += `<line x1="${pad.left}" y1="${cy}" x2="${pad.left+cW}" y2="${cy}" stroke="#3a3a3f" stroke-width="1"/>`;
+    html += `<text x="${pad.left-6}" y="${cy+4}" fill="#9ca3af" font-size="10" text-anchor="end">${y}${y===100?'':''}</text>`;
+  }
+
+  funnelKeys.forEach((key, ki) => {
+    const cx = pad.left + (ki + 0.5) * (cW / funnelKeys.length);
+    const ssVal = COMP_FUNNEL[key][0];
+    const avgVal = COMP_FUNNEL[key].slice(1).reduce((a,b)=>a+b,0) / 5;
+    const maxV = key === 'NPS' ? 80 : 100;
+    const ssH = (ssVal / maxV) * cH;
+    const avgH = (avgVal / maxV) * cH;
+    // Avg bar
+    html += `<rect x="${cx - barW}" y="${pad.top+cH - avgH}" width="${barW - 2}" height="${avgH}" fill="${compAvgColor}" rx="2"/>`;
+    html += `<text x="${cx - barW/2 - 1}" y="${pad.top+cH-avgH-4}" fill="#9ca3af" font-size="10" text-anchor="middle">${Math.round(avgVal)}${key==='NPS'?'':''}</text>`;
+    // SS bar
+    html += `<rect x="${cx + 2}" y="${pad.top+cH - ssH}" width="${barW - 2}" height="${ssH}" fill="#C81026" rx="2"/>`;
+    html += `<text x="${cx + barW/2 + 1}" y="${pad.top+cH-ssH-4}" fill="#e8e0d5" font-size="11" font-weight="700" text-anchor="middle">${ssVal}${key==='NPS'?'':''}</text>`;
+    // X label
+    html += `<text x="${cx}" y="${pad.top+cH+16}" fill="#9ca3af" font-size="11" text-anchor="middle">${key}</text>`;
+    // Delta
+    const delta = ssVal - Math.round(avgVal);
+    const dColor = delta >= 0 ? '#34d399' : '#f87171';
+    html += `<text x="${cx}" y="${pad.top+cH+30}" fill="${dColor}" font-size="10" font-weight="700" text-anchor="middle">${delta>=0?'+':''}${delta}</text>`;
+  });
+
+  html += `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+cH}" stroke="#6b7280" stroke-width="1.5"/>`;
+  html += `<line x1="${pad.left}" y1="${pad.top+cH}" x2="${pad.left+cW}" y2="${pad.top+cH}" stroke="#6b7280" stroke-width="1.5"/>`;
+
+  // Legend
+  html += `<rect x="${pad.left}" y="${vH-8}" width="10" height="10" rx="2" fill="${compAvgColor}"/>`;
+  html += `<text x="${pad.left+14}" y="${vH-0}" fill="#9ca3af" font-size="10">Comp. avg.</text>`;
+  html += `<rect x="${pad.left+90}" y="${vH-8}" width="10" height="10" rx="2" fill="#C81026"/>`;
+  html += `<text x="${pad.left+104}" y="${vH-0}" fill="#e8e0d5" font-size="10">Shake Shack</text>`;
+
+  svg.innerHTML = html;
+})();
+
+// Competitive position summary table
+(function() {
+  const cont = document.getElementById('comp-summary-table');
+  const rows = EQUITY_DIMS.map(dim => {
+    const dKey = dim.replace('\n',' ');
+    const ssVal = EQUITY_VALS['Shake Shack'][EQUITY_DIMS.indexOf(dim)];
+    const compVals = COMPETITORS.slice(1).map(c => EQUITY_VALS[c][EQUITY_DIMS.indexOf(dim)]);
+    const compAvg = Math.round(compVals.reduce((a,b)=>a+b,0)/compVals.length);
+    const delta = ssVal - compAvg;
+    const pos = delta >= 8 ? '↑ Leads' : delta >= -4 ? '= Matches' : '↓ Trails';
+    const posColor = delta >= 8 ? '#34d399' : delta >= -4 ? '#f59e0b' : '#f87171';
+    return `<tr>
+      <td><strong>${dKey}</strong></td>
+      <td class="num">${ssVal}%</td>
+      <td class="num">${compAvg}%</td>
+      <td style="font-weight:700;color:${posColor}">${delta>=0?'+':''}${delta}pp</td>
+      <td style="font-weight:700;color:${posColor}">${pos}</td>
+    </tr>`;
+  });
+  cont.innerHTML = `<table class="data-table"><thead><tr><th>Dimension</th><th>Shake Shack</th><th>Comp. Avg.</th><th>Gap</th><th>Position</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+})();
+
+// Segment heatmap
+(function() {
+  const svg = document.getElementById('seg-heatmap');
+  const vW = 1100, vH = 320;
+  const metrics = SEG_METRICS;
+  const segs = SEGMENTS;
+  const pad = { top: 32, right: 20, bottom: 20, left: 145 };
+  const cellW = (vW - pad.left - pad.right) / metrics.length;
+  const cellH = (vH - pad.top - pad.bottom) / segs.length;
+
+  let html = '';
+  // Col headers
+  metrics.forEach((m, mi) => {
+    const cx = pad.left + (mi + 0.5) * cellW;
+    html += `<text x="${cx}" y="${pad.top - 8}" fill="#9ca3af" font-size="11" text-anchor="middle">${m}</text>`;
+  });
+
+  segs.forEach((seg, si) => {
+    const ry = pad.top + si * cellH;
+    const color = SEG_COLORS[si];
+    html += `<text x="${pad.left - 8}" y="${ry + cellH/2 + 4}" fill="${color}" font-size="12" font-weight="700" text-anchor="end">${seg}</text>`;
+    metrics.forEach((m, mi) => {
+      const val = SEG_HEALTH[seg][mi];
+      const norm = val / 100;
+      const cx = pad.left + mi * cellW;
+      // Color from dark to saturated red based on value
+      const alpha = 0.15 + norm * 0.8;
+      html += `<rect x="${cx+1}" y="${ry+1}" width="${cellW-2}" height="${cellH-2}" fill="${color}" opacity="${alpha}" rx="3"/>`;
+      const textFill = norm > 0.55 ? '#ffffff' : '#e8e0d5';
+      html += `<text x="${cx+cellW/2}" y="${ry+cellH/2+4}" fill="${textFill}" font-size="12" font-weight="700" text-anchor="middle">${val}${mi === 5 ? '' : '%'}</text>`;
+    });
+  });
+
+  svg.innerHTML = html;
+})();
+
+// Segment awareness-to-consideration gap
+(function() {
+  const svg = document.getElementById('seg-gap');
+  const vW = 480, vH = 280;
+  const pad = { top: 16, right: 24, bottom: 32, left: 138 };
+  const cW = vW - pad.left - pad.right;
+  const cH = vH - pad.top - pad.bottom;
+  const barH = 18, gap = 14;
+
+  let html = '';
+  SEGMENTS.forEach((seg, i) => {
+    const aware = SEG_HEALTH[seg][0];
+    const consid = SEG_HEALTH[seg][1];
+    const y = pad.top + i * (barH * 2 + gap);
+    // Awareness bar (gray)
+    html += `<rect x="${pad.left}" y="${y}" width="${(aware/100)*cW}" height="${barH}" fill="#4b5563" rx="2"/>`;
+    html += `<text x="${pad.left+(aware/100)*cW+4}" y="${y+barH-2}" fill="#9ca3af" font-size="11">${aware}%</text>`;
+    // Consideration bar (colored)
+    html += `<rect x="${pad.left}" y="${y+barH+2}" width="${(consid/100)*cW}" height="${barH}" fill="${SEG_COLORS[i]}" rx="2"/>`;
+    html += `<text x="${pad.left+(consid/100)*cW+4}" y="${y+barH+barH}" fill="#e8e0d5" font-size="11" font-weight="700">${consid}%</text>`;
+    // Segment label
+    html += `<text x="${pad.left-6}" y="${y+barH+6}" fill="${SEG_COLORS[i]}" font-size="11" font-weight="700" text-anchor="end">${seg}</text>`;
+    // Gap annotation
+    const gapPp = aware - consid;
+    html += `<text x="${vW - pad.right - 4}" y="${y+barH+6}" fill="#6b7280" font-size="10" text-anchor="end">gap: ${gapPp}pp</text>`;
+  });
+
+  // Legend
+  html += `<rect x="${pad.left}" y="${vH-14}" width="10" height="8" rx="1" fill="#4b5563"/>`;
+  html += `<text x="${pad.left+13}" y="${vH-7}" fill="#9ca3af" font-size="10">Awareness</text>`;
+  html += `<rect x="${pad.left+80}" y="${vH-14}" width="10" height="8" rx="1" fill="#C81026"/>`;
+  html += `<text x="${pad.left+93}" y="${vH-7}" fill="#e8e0d5" font-size="10">Consideration</text>`;
+  svg.innerHTML = html;
+})();
+
+// Segment NPS + Value Perception
+(function() {
+  const svg = document.getElementById('seg-nps');
+  const vW = 480, vH = 280;
+  const pad = { top: 24, right: 60, bottom: 36, left: 52 };
+  const cW = vW - pad.left - pad.right;
+  const cH = vH - pad.top - pad.bottom;
+  const barW = cW / SEGMENTS.length * 0.55;
+  const maxNPS = 100;
+  const xScale = i => pad.left + (i + 0.5) * (cW / SEGMENTS.length);
+
+  let html = '';
+  // Y grid (NPS left axis)
+  for (let y = 0; y <= 80; y += 20) {
+    const cy = pad.top + cH - (y/maxNPS)*cH;
+    html += `<line x1="${pad.left}" y1="${cy}" x2="${pad.left+cW}" y2="${cy}" stroke="#3a3a3f" stroke-width="1"/>`;
+    html += `<text x="${pad.left-5}" y="${cy+4}" fill="#9ca3af" font-size="10" text-anchor="end">+${y}</text>`;
+  }
+
+  // Bars (NPS)
+  SEGMENTS.forEach((seg, i) => {
+    const nps = SEG_HEALTH[seg][5];
+    const val = SEG_HEALTH[seg][4]; // value perception
+    const cx = xScale(i);
+    const bh = (nps / maxNPS) * cH;
+    html += `<rect x="${cx - barW/2}" y="${pad.top+cH - bh}" width="${barW}" height="${bh}" fill="${SEG_COLORS[i]}" rx="2" opacity="0.7"/>`;
+    html += `<text x="${cx}" y="${pad.top+cH-bh-5}" fill="${SEG_COLORS[i]}" font-size="12" font-weight="700" text-anchor="middle">+${nps}</text>`;
+    html += `<text x="${cx}" y="${pad.top+cH+16}" fill="#9ca3af" font-size="10" text-anchor="middle">${seg.split(' ')[0]}</text>`;
+  });
+
+  // Value perception line
+  const vpPts = SEGMENTS.map((seg, i) => {
+    const vp = SEG_HEALTH[seg][4];
+    const cy = pad.top + cH - (vp / maxNPS) * cH;
+    return `${xScale(i)},${cy}`;
+  }).join(' ');
+  html += `<polyline points="${vpPts}" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="5,3"/>`;
+  SEGMENTS.forEach((seg, i) => {
+    const vp = SEG_HEALTH[seg][4];
+    const cy = pad.top + cH - (vp / maxNPS) * cH;
+    html += `<circle cx="${xScale(i)}" cy="${cy}" r="4" fill="#f59e0b"/>`;
+  });
+
+  // Right axis label for value perception
+  html += `<text x="${pad.left+cW+8}" y="${pad.top+20}" fill="#f59e0b" font-size="10">Value</text>`;
+  html += `<text x="${pad.left+cW+8}" y="${pad.top+32}" fill="#f59e0b" font-size="10">Percep.</text>`;
+
+  html += `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+cH}" stroke="#6b7280" stroke-width="1.5"/>`;
+  html += `<line x1="${pad.left}" y1="${pad.top+cH}" x2="${pad.left+cW}" y2="${pad.top+cH}" stroke="#6b7280" stroke-width="1.5"/>`;
+
+  // Legend
+  html += `<rect x="${pad.left}" y="${vH-10}" width="10" height="10" rx="2" fill="#C81026" opacity="0.7"/>`;
+  html += `<text x="${pad.left+13}" y="${vH-2}" fill="#9ca3af" font-size="10">NPS (bars)</text>`;
+  html += `<line x1="${pad.left+86}" y1="${vH-5}" x2="${pad.left+99}" y2="${vH-5}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,2"/>`;
+  html += `<text x="${pad.left+102}" y="${vH-2}" fill="#f59e0b" font-size="10">Value Perception</text>`;
+
+  svg.innerHTML = html;
+})();
+
+// Business outcomes cards
+(function() {
+  const grid = document.getElementById('outcome-cards');
+  grid.innerHTML = OUTCOME_DATA.map(d => `
+    <div class="outcome-card">
+      <div class="oc-metric">${d.metric}</div>
+      <div class="oc-move">${d.move}</div>
+      <div class="oc-chain">
+        ${d.chain.map((step, i) => `<div style="margin-bottom:3px;padding-left:${i>0?14:0}px;font-size:${i===0?13:12}px;color:${i===0?'var(--body)':'var(--muted)'};">${i>0?'→ ':''} ${step}</div>`).join('')}
+      </div>
+      <div class="oc-impact">${d.impact}</div>
+      <div class="oc-impact-label">${d.note}</div>
+    </div>
+  `).join('');
+})();
+
+// Sensitivity table
+(function() {
+  const tbl = document.getElementById('sensitivity-table');
+  const headers = ['Metric', ...SENSITIVITY_SIZES.map(s => `+${s}`)];
+  const rows = SENSITIVITY_METRICS.map((m, mi) =>
+    `<tr><td><strong>${m}</strong></td>${SENSITIVITY_SIZES.map(s =>
+      `<td class="num" style="color:${s>=5?'#C81026':'var(--ink)'}">$${(SENSITIVITY_RATES[mi]*s).toFixed(1)}M</td>`
+    ).join('')}</tr>`
+  );
+  tbl.innerHTML = `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`;
+})();
+
+// Survey instrument
+(function() {
+  function renderQs(container, qs) {
+    const el = document.getElementById(container);
+    el.innerHTML = qs.map(q => `
+      <div class="q-block">
+        <div class="q-num">${q.num}</div>
+        <div class="q-text">${q.text}</div>
+        <div class="q-format">Format: ${q.format}</div>
+        ${q.options ? `<div class="q-options">${q.options.map(o=>`<span class="q-opt">${o}</span>`).join('')}</div>` : ''}
+        <div class="q-rationale" style="margin-top:8px;color:var(--muted)"><em>Rationale:</em> ${q.rationale}</div>
+      </div>
+    `).join('');
+  }
+  renderQs('screener-qs', SCREENER_QS);
+  renderQs('main-qs', MAIN_QS);
+})();
+
+// Appendix
+(function() {
+  const appendixData = [
+    {
+      title: 'Brand Funnel — All Periods',
+      data: [
+        ['Stage', 'Q2 2024', 'Q2 2025', 'YoY Change'],
+        ...FUNNEL_STAGES.map((s, i) => [s.replace('\n',' '), FUNNEL_YOY[i]+'%', FUNNEL_CURRENT[i]+'%', (FUNNEL_CURRENT[i]-FUNNEL_YOY[i]>=0?'+':'')+((FUNNEL_CURRENT[i]-FUNNEL_YOY[i]))+'pp'])
+      ]
+    },
+    {
+      title: 'Brand Equity Dimensions — All Competitors',
+      data: [
+        ['Dimension', ...COMPETITORS],
+        ...EQUITY_DIMS.map((d, di) => [d.replace('\n',' '), ...COMPETITORS.map(c => EQUITY_VALS[c][di]+'%')])
+      ]
+    },
+    {
+      title: 'Brand Health by Segment',
+      data: [
+        ['Segment', ...SEG_METRICS],
+        ...SEGMENTS.map(s => [s, ...SEG_HEALTH[s].map((v, mi) => v + (mi===5?'':' %'))])
+      ]
+    },
+    {
+      title: 'KPI Scorecard Targets and Alert Thresholds',
+      data: [
+        ['Metric', 'Current', 'Prior Period', 'Full-Year Target', 'Alert Threshold'],
+        ...KPI_DATA.map(k => [k.label, k.val, k.val.replace(/\d+/, v => (parseInt(v)-1)), k.target+(k.label.includes('NPS')?'':'%'), k.alert+(k.label.includes('NPS')?'':'%')])
+      ]
+    },
+    {
+      title: '6-Quarter Trend Data',
+      data: [
+        ['Quarter', ...TREND_DATA.map(t => t.label)],
+        ...QUARTERS.map((q, qi) => [q, ...TREND_DATA.map(t => t.values[qi]+(t.label.includes('NPS')?'':'%'))])
+      ]
+    },
+    {
+      title: 'Business Outcomes Assumptions',
+      data: [
+        ['Metric', 'Move', 'Estimated Annual Impact', 'Key Assumption'],
+        ...OUTCOME_DATA.map(d => [d.metric, d.move, d.impact, d.chain[0]])
+      ]
+    }
+  ];
+
+  const cont = document.getElementById('appendix-container');
+  cont.innerHTML = appendixData.map((sec, idx) => `
+    <div class="appendix-section">
+      <button class="appendix-toggle" onclick="toggleAppendix(this, 'app-body-${idx}')">
+        ${sec.title}
+        <span class="toggle-arrow">▼</span>
+      </button>
+      <div class="appendix-body" id="app-body-${idx}">
+        <table class="data-table" style="margin-top:0;">
+          <thead><tr>${sec.data[0].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+          <tbody>${sec.data.slice(1).map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `).join('');
+})();
+
+function toggleAppendix(btn, bodyId) {
+  const body = document.getElementById(bodyId);
+  btn.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// Nav highlight on scroll
+window.addEventListener('scroll', () => {
+  const sections = document.querySelectorAll('.section');
+  const btns = document.querySelectorAll('.nav-btn');
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 140) current = s.id;
+  });
+  btns.forEach(b => {
+    b.classList.toggle('active', b.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
