@@ -1,0 +1,559 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Meridian MMM Exercise: Pinewave Co.\n",
+    "\n",
+    "**Goal:** Build a Bayesian Marketing Mix Model using Google Meridian on 2 years of synthetic weekly data.  \n",
+    "**Before starting:** Make sure you've run `python generate_data.py` to create `data/synthetic_mmm.csv`.\n",
+    "\n",
+    "Work through each section in order. Checkpoint questions are marked with **🔍 Reflect.**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 1: Load & Explore the Data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import matplotlib.dates as mdates\n",
+    "\n",
+    "df = pd.read_csv('data/synthetic_mmm.csv', parse_dates=['date'])\n",
+    "print(df.shape)\n",
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.describe().round(2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Plot revenue over time\n",
+    "fig, ax = plt.subplots(figsize=(14, 4))\n",
+    "ax.plot(df['date'], df['revenue'], linewidth=1.5)\n",
+    "ax.set_title('Pinewave Co. — Weekly Revenue')\n",
+    "ax.set_ylabel('Revenue ($)')\n",
+    "ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))\n",
+    "ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))\n",
+    "plt.xticks(rotation=45)\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Plot media spend by channel\n",
+    "channels = ['tv_spend', 'search_spend', 'social_spend', 'display_spend']\n",
+    "fig, axes = plt.subplots(4, 1, figsize=(14, 10), sharex=True)\n",
+    "colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']\n",
+    "\n",
+    "for ax, ch, color in zip(axes, channels, colors):\n",
+    "    ax.bar(df['date'], df[ch], width=5, color=color, alpha=0.7, label=ch)\n",
+    "    ax.set_ylabel('Spend ($)')\n",
+    "    ax.legend(loc='upper left')\n",
+    "\n",
+    "axes[-1].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))\n",
+    "axes[-1].xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))\n",
+    "plt.xticks(rotation=45)\n",
+    "fig.suptitle('Weekly Media Spend by Channel', fontsize=13)\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Correlation: spend vs revenue (naive, without adstock)\n",
+    "corr = df[['revenue'] + channels].corr()['revenue'].drop('revenue')\n",
+    "print('Raw spend-revenue correlations (pre-adstock):')\n",
+    "print(corr.round(3))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**🔍 Reflect — Section 1:**\n",
+    "1. Do you see seasonality in revenue? Which quarters look strongest?\n",
+    "2. Which channel has the highest raw correlation with revenue? Is that the channel you'd expect to have the highest ROI?\n",
+    "3. TV has slow adstock decay (0.80) — meaning this week's TV spend still influences revenue several weeks later. Does a raw correlation capture that? Why or why not?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 2: Configure MeridianData\n",
+    "\n",
+    "Meridian requires data in a specific `xarray.Dataset` format via its `InputData` class."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": "import meridian\nfrom meridian.data import InputData\nfrom meridian.model import spec as model_spec\nimport tensorflow_probability as tfp\nimport xarray as xr\ntfd = tfp.distributions\n\nprint('Meridian version:', meridian.__version__)\n# If this fails, confirm you are inside the venv: source venv/bin/activate"
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": "# Meridian InputData uses named xarray DataArrays for all inputs.\n# Dimensions: geo (national=1), time (104 weeks), media_channel, control_variable\n\nmedia_channels = ['tv', 'search', 'social', 'display']\ncontrol_names  = ['price_index', 'holiday', 'trend']\ngeo            = ['national']\ntime_coords    = df['date'].dt.strftime('%Y-%m-%d').tolist()\n\n# Media spend: (geo, time, media_channel)\nmedia_array = xr.DataArray(\n    df[['tv_spend', 'search_spend', 'social_spend', 'display_spend']].values[np.newaxis],\n    dims=['geo', 'time', 'media_channel'],\n    coords={'geo': geo, 'time': time_coords, 'media_channel': media_channels},\n)\n\n# Controls: (geo, time, control_variable)\ncontrol_array = xr.DataArray(\n    df[control_names].values[np.newaxis],\n    dims=['geo', 'time', 'control_variable'],\n    coords={'geo': geo, 'time': time_coords, 'control_variable': control_names},\n)\n\n# KPI (revenue): (geo, time)\nkpi_array = xr.DataArray(\n    df['revenue'].values[np.newaxis],\n    dims=['geo', 'time'],\n    coords={'geo': geo, 'time': time_coords},\n)\n\n# Revenue per KPI unit = 1.0 because KPI is already in dollars\nrevenue_per_kpi = xr.DataArray(\n    np.ones((1, len(df))),\n    dims=['geo', 'time'],\n    coords={'geo': geo, 'time': time_coords},\n)\n\n# Build InputData\n# Note: parameter names may vary slightly by Meridian version — check docs if you get a TypeError\ninput_data = InputData(\n    kpi=kpi_array,\n    kpi_type='revenue',\n    media=media_array,\n    media_spends=media_array,   # media_spends (not media_spend) in v1.x\n    controls=control_array,\n    revenue_per_kpi=revenue_per_kpi,\n)\n\nprint('InputData configured successfully.')\nprint(f'  KPI shape:      {input_data.kpi.shape}')\nprint(f'  Media shape:    {input_data.media.shape}')\nprint(f'  Controls shape: {input_data.controls.shape}')"
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**🔍 Reflect — Section 2:**\n",
+    "1. Why does Meridian use a `geo` dimension even for national data?\n",
+    "2. What's the difference between `media` (impressions/GRPs) and `media_spend` (dollars)? In this exercise we use spend for both — what would change if you had actual impression data?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 3: Set Priors\n",
+    "\n",
+    "Priors encode your beliefs about parameter values before the model sees data. Meridian provides sensible defaults — start with those, then experiment in Section 7."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": "# Adstock prior: Beta distribution, mean ~0.5 (moderate decay)\nadstock_prior = tfd.Beta(concentration1=2.0, concentration0=2.0)\n\n# ROI prior: HalfNormal — ensures ROI > 0, most mass between 0–3x\n# scale=1.0 is a weakly informative default; adjust upward for high-ROI channels\nroi_prior = tfd.HalfNormal(scale=1.0)\n\nmodel_specification = model_spec.ModelSpec(\n    roi_prior=roi_prior,\n    adstock_prior=adstock_prior,\n)\n\nprint('Prior summary:')\nprint(f'  Adstock — Beta(2,2): mean={2/(2+2):.2f}, std={((2*2)/((2+2)**2*(2+2+1)))**0.5:.2f}')\nprint(f'  ROI — HalfNormal(1.0): most mass in [0, 3]')"
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Visualize the priors\n",
+    "fig, axes = plt.subplots(1, 2, figsize=(12, 4))\n",
+    "\n",
+    "# Adstock prior\n",
+    "x_adstock = np.linspace(0, 1, 200)\n",
+    "from scipy.stats import beta as beta_dist, halfnorm\n",
+    "axes[0].plot(x_adstock, beta_dist.pdf(x_adstock, 2, 2), 'b-', linewidth=2)\n",
+    "axes[0].set_title('Adstock Decay Prior — Beta(2,2)')\n",
+    "axes[0].set_xlabel('Decay rate (0=instant, 1=permanent)')\n",
+    "axes[0].set_ylabel('Density')\n",
+    "axes[0].axvline(0.5, color='r', linestyle='--', label='mean=0.5')\n",
+    "axes[0].legend()\n",
+    "\n",
+    "# ROI prior\n",
+    "x_roi = np.linspace(0, 6, 200)\n",
+    "axes[1].plot(x_roi, halfnorm.pdf(x_roi, scale=1.0), 'g-', linewidth=2)\n",
+    "axes[1].set_title('ROI Prior — HalfNormal(scale=1.0)')\n",
+    "axes[1].set_xlabel('ROI (revenue / spend)')\n",
+    "axes[1].set_ylabel('Density')\n",
+    "axes[1].axvline(1.0, color='r', linestyle='--', label='ROI=1x (breakeven)')\n",
+    "axes[1].legend()\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**🔍 Reflect — Section 3:**\n",
+    "1. The adstock prior is symmetric around 0.5. TV typically has slow decay (~0.8) and search has fast decay (~0.35). Is this prior appropriate, or should you set channel-specific priors?\n",
+    "2. The ROI prior puts most mass below 3x. If you knew from past experience that Paid Search routinely delivers 5–8x ROI, how would you change the prior?\n",
+    "3. What's the risk of using an overly tight (informative) prior?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 4: Fit the Model\n",
+    "\n",
+    "This section runs MCMC sampling. On CPU (MacBook), expect **10–25 minutes** for 4 chains × 500 samples.  \n",
+    "Set `num_samples=200` for a faster (less accurate) run first, then rerun with 500 for the final result."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from meridian.model import Meridian\n",
+    "\n",
+    "mmm = Meridian(\n",
+    "    input_data=input_data,\n",
+    "    model_spec=model_specification,\n",
+    ")\n",
+    "\n",
+    "print('Model initialized. Starting MCMC sampling...')\n",
+    "print('This will take 10–25 minutes on CPU. Get a coffee ☕')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import time\n",
+    "start = time.time()\n",
+    "\n",
+    "mmm.fit(\n",
+    "    num_chains=4,\n",
+    "    num_samples=500,     # reduce to 200 for a quick test run\n",
+    "    num_warmup=500,\n",
+    "    seed=42,\n",
+    ")\n",
+    "\n",
+    "elapsed = time.time() - start\n",
+    "print(f'\\nFitting complete in {elapsed/60:.1f} minutes.')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 5: Evaluate Convergence\n",
+    "\n",
+    "Before trusting model outputs, confirm the MCMC chains converged."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# R-hat diagnostic: values close to 1.0 mean chains mixed well\n",
+    "# Target: R-hat < 1.1 for all parameters\n",
+    "summary = mmm.get_rhat_summary()\n",
+    "print('R-hat summary:')\n",
+    "print(summary)\n",
+    "\n",
+    "max_rhat = summary['rhat'].max()\n",
+    "if max_rhat < 1.1:\n",
+    "    print(f'\\n✅ Max R-hat = {max_rhat:.3f} — convergence looks good!')\n",
+    "else:\n",
+    "    print(f'\\n⚠️  Max R-hat = {max_rhat:.3f} — some parameters did not converge.')\n",
+    "    print('   Try increasing num_warmup to 1000 and rerunning Section 4.')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Trace plots: visualize chain mixing for ROI parameters\n",
+    "mmm.plot_trace(var_names=['roi_m'])  # roi_m = media ROI parameters\n",
+    "plt.suptitle('Trace Plots: ROI by Channel (all 4 chains)', y=1.02)\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Posterior predictive check: does the model reproduce the observed revenue?\n",
+    "mmm.plot_posterior_predictive_check()\n",
+    "plt.title('Posterior Predictive Check: Observed vs. Predicted Revenue')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**🔍 Reflect — Section 5:**\n",
+    "1. What does an R-hat of 1.0 mean? What would R-hat > 1.1 tell you?\n",
+    "2. In the trace plots, do the chains look like 'fuzzy caterpillars' (good mixing) or do they drift apart (poor mixing)?\n",
+    "3. In the posterior predictive check, does the model capture the seasonal peaks? Where does it miss most?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 6: Extract Results\n",
+    "\n",
+    "Now the interesting part: what does the model say about ROI, response curves, and budget?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ROI by channel: posterior median + 90% credible interval\n",
+    "roi_summary = mmm.get_roi_summary(confidence_level=0.90)\n",
+    "print('ROI Summary (posterior median + 90% CI):')\n",
+    "print(roi_summary.round(3))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Plot ROI with uncertainty\n",
+    "fig, ax = plt.subplots(figsize=(9, 5))\n",
+    "\n",
+    "channels_display = ['TV', 'Search', 'Social', 'Display']\n",
+    "medians = roi_summary['roi_median'].values\n",
+    "lo = roi_summary['roi_q05'].values\n",
+    "hi = roi_summary['roi_q95'].values\n",
+    "\n",
+    "y_pos = np.arange(len(channels_display))\n",
+    "ax.barh(y_pos, medians, xerr=[medians - lo, hi - medians],\n",
+    "        color=['#1f77b4','#ff7f0e','#2ca02c','#d62728'],\n",
+    "        alpha=0.7, capsize=5)\n",
+    "ax.set_yticks(y_pos)\n",
+    "ax.set_yticklabels(channels_display)\n",
+    "ax.axvline(1.0, color='black', linestyle='--', label='Breakeven (1x)')\n",
+    "ax.set_xlabel('ROI (revenue per $1 spend)')\n",
+    "ax.set_title('Estimated ROI by Channel (90% Credible Interval)')\n",
+    "ax.legend()\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Revenue contribution decomposition\n",
+    "decomp = mmm.get_contribution_summary()\n",
+    "print('Revenue Contribution Breakdown:')\n",
+    "print(decomp.round(2))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Response curves: shows diminishing returns\n",
+    "mmm.plot_response_curves(\n",
+    "    spend_multipliers=np.linspace(0, 3, 50),\n",
+    "    confidence_level=0.80,\n",
+    ")\n",
+    "plt.suptitle('Response Curves: Marginal Revenue vs. Spend Level', y=1.02)\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Budget optimizer: given same total budget, what's the optimal allocation?\n",
+    "total_budget = df[['tv_spend','search_spend','social_spend','display_spend']].sum().sum()\n",
+    "print(f'Total budget to reallocate: ${total_budget:,.0f}')\n",
+    "\n",
+    "optimizer_result = mmm.optimize_budget(\n",
+    "    total_budget=total_budget,\n",
+    "    fixed_costs=None,\n",
+    ")\n",
+    "print('\\nOptimal budget allocation:')\n",
+    "print(optimizer_result.round(2))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**🔍 Reflect — Section 6:**\n",
+    "1. Which channel has the highest ROI? Does this match your intuition from the raw correlations in Section 1?\n",
+    "2. Look at the credible intervals. Which channel's ROI estimate is most uncertain? Why might that be?\n",
+    "3. The response curves show diminishing returns. For which channel does saturation kick in earliest?\n",
+    "4. The budget optimizer recommends a reallocation. What's the largest shift it suggests? Does that make sense given the ROI rankings?\n",
+    "5. What percentage of revenue does the model attribute to media vs. baseline? Compare to the true value (55% baseline) — how close did the model get?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Section 7: Experiments — Change a Prior\n",
+    "\n",
+    "This is the core learning section. You'll change one prior, refit the model, and compare results to the original."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Experiment A: Tighten the ROI prior to be more skeptical of high ROI\n",
+    "# Original: HalfNormal(scale=1.0)\n",
+    "# New: HalfNormal(scale=0.5) — stronger belief that ROI < 1.5x\n",
+    "\n",
+    "roi_prior_tight = tfd.HalfNormal(scale=0.5)\n",
+    "\n",
+    "model_spec_tight = model_spec.ModelSpec(\n",
+    "    roi_prior=roi_prior_tight,\n",
+    "    adstock_prior=adstock_prior,\n",
+    ")\n",
+    "\n",
+    "mmm_tight = Meridian(\n",
+    "    input_data=input_data,\n",
+    "    model_spec=model_spec_tight,\n",
+    ")\n",
+    "\n",
+    "print('Fitting model with tighter ROI prior...')\n",
+    "mmm_tight.fit(\n",
+    "    num_chains=4,\n",
+    "    num_samples=500,\n",
+    "    num_warmup=500,\n",
+    "    seed=42,\n",
+    ")\n",
+    "print('Done.')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Compare ROI estimates: original vs. tight prior\n",
+    "roi_original = mmm.get_roi_summary(confidence_level=0.90)\n",
+    "roi_tight    = mmm_tight.get_roi_summary(confidence_level=0.90)\n",
+    "\n",
+    "comparison = pd.DataFrame({\n",
+    "    'channel':          ['TV', 'Search', 'Social', 'Display'],\n",
+    "    'roi_original':     roi_original['roi_median'].values,\n",
+    "    'roi_tight_prior':  roi_tight['roi_median'].values,\n",
+    "    'true_roi':         [2.1, 4.3, 2.8, 1.4],\n",
+    "})\n",
+    "\n",
+    "print('ROI Comparison:')\n",
+    "print(comparison.round(3))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**🔍 Reflect — Section 7:**\n",
+    "1. Did tightening the ROI prior pull the estimates toward lower values? By how much?\n",
+    "2. Which channel's ROI changed the most? Which changed the least? What does that tell you about how much the data (vs. the prior) is driving each estimate?\n",
+    "3. Now look at the true ROI values in the comparison table. Which model (original or tight prior) was closer to truth for Search (true ROI = 4.3x)? Why?\n",
+    "4. **Bonus experiment:** Try changing the adstock prior to `Beta(8, 2)` for TV only (strongly favoring slow decay). Does the TV ROI estimate change? Does the fit improve?\n",
+    "\n",
+    "---\n",
+    "### Bonus Experiment (optional)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Bonus: channel-specific adstock priors\n",
+    "# Meridian supports per-channel priors via a dict\n",
+    "\n",
+    "# Uncomment and fill in when ready:\n",
+    "# channel_adstock_priors = {\n",
+    "#     'tv':      tfd.Beta(concentration1=8.0, concentration0=2.0),  # skewed toward slow decay\n",
+    "#     'search':  tfd.Beta(concentration1=2.0, concentration0=5.0),  # skewed toward fast decay\n",
+    "#     'social':  tfd.Beta(concentration1=2.0, concentration0=2.0),  # symmetric\n",
+    "#     'display': tfd.Beta(concentration1=2.0, concentration0=4.0),  # skewed toward fast decay\n",
+    "# }\n",
+    "#\n",
+    "# model_spec_channelwise = model_spec.ModelSpec(\n",
+    "#     roi_prior=roi_prior,\n",
+    "#     adstock_prior=channel_adstock_priors,\n",
+    "# )\n",
+    "#\n",
+    "# mmm_channelwise = Meridian(input_data=input_data, model_spec=model_spec_channelwise)\n",
+    "# mmm_channelwise.fit(num_chains=4, num_samples=500, num_warmup=500, seed=42)\n",
+    "print('Uncomment the code above to run the bonus experiment.')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "## Wrap-Up: Key Takeaways\n",
+    "\n",
+    "Revisit the OVERVIEW.md to see if your Meridian ROI estimates are close to the ground truth. Then compare with your Robyn results.\n",
+    "\n",
+    "**Final reflection questions:**\n",
+    "1. How long did model fitting take? How does that scale with data size?\n",
+    "2. What would you change in the priors if you were modeling a real brand with industry knowledge?\n",
+    "3. The Bayesian approach gave you credible intervals (a range of plausible values). How would you use those in a business decision vs. a point estimate?\n",
+    "4. If you had 3 years of data instead of 2, how do you think the uncertainty would change?"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.11.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}

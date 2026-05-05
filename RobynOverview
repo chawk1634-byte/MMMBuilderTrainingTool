@@ -1,0 +1,181 @@
+# Robyn Exercise: Semi-Automated MMM with Meta's Package
+
+## What You'll Build
+
+A Marketing Mix Model using [Meta Robyn](https://robyn.ai) — a widely-used open-source MMM package that automates much of the model selection process using multi-objective optimization (Nevergrad). By the end you will have:
+
+- A Pareto frontier of candidate models to choose from
+- Estimated ROI for 4 media channels with confidence ranges
+- Response curves and a budget reallocation recommendation
+- Experience with Robyn's distinctive "model selection" workflow
+
+**Estimated time:** 1.5–3 hours (Robyn is faster to set up than Meridian)
+
+---
+
+## Meridian vs. Robyn: Key Differences
+
+| | Meridian | Robyn |
+|---|---|---|
+| Language | Python | R (this exercise) |
+| Framework | Bayesian (MCMC) | Frequentist + Nevergrad optimization |
+| Model selection | Single model with posteriors | Pareto frontier of many models |
+| Adstock types | Geometric | Geometric + Weibull |
+| Uncertainty | Credible intervals | Pareto frontier spread |
+| Fit time | Slower (MCMC) | Faster (optimization) |
+
+---
+
+## Prerequisites
+
+- **R 4.2 or higher** ([download](https://cran.r-project.org))
+- **RStudio** (recommended) ([download](https://posit.co/download/rstudio-desktop/))
+- **Python 3.8+** installed (for Nevergrad, which Robyn calls via `reticulate`)
+- ~2 GB disk space for packages
+
+> **Python-only alternative:** Meta released a Python beta of Robyn (`pip install robynpy`). The API differs slightly. This exercise uses the R version (more stable, more documentation). See note at end of this file if you want the Python path.
+
+---
+
+## Setup: Step by Step
+
+### 1. Install Robyn in R
+
+Open RStudio and run:
+
+```r
+install.packages("Robyn")
+```
+
+This may take 5–10 minutes and will install dependencies including `reticulate`, `prophet`, `glmnet`, `nevergrad` (via Python), `ggplot2`, and others.
+
+### 2. Install Nevergrad (Python bridge)
+
+Robyn uses Python's Nevergrad library for optimization. In R:
+
+```r
+reticulate::install_miniconda()        # if you don't have conda/Python yet
+reticulate::conda_install("r-reticulate", "nevergrad", pip=TRUE)
+```
+
+Or if you already have Python:
+
+```r
+reticulate::py_install("nevergrad", pip=TRUE)
+```
+
+### 3. Verify the install
+
+```r
+library(Robyn)
+packageVersion("Robyn")   # should be 3.x.x
+```
+
+### 4. Generate the synthetic dataset
+
+Open RStudio, set working directory to `mmm-exercises/robyn/`, then run:
+
+```r
+source("generate_data.R")
+```
+
+This creates `data/synthetic_mmm.csv`. The dataset is the same Pinewave Co. brand used in the Meridian exercise, formatted for Robyn's expected column names.
+
+### 5. Run the exercise
+
+```r
+source("robyn_exercise.R")
+```
+
+Or open `robyn_exercise.R` in RStudio and run it section by section (recommended for learning).
+
+---
+
+## Exercise Structure
+
+| Section | What You'll Do |
+|---|---|
+| 1. Load & explore data | Plot spend/revenue; understand Robyn's data expectations |
+| 2. Set InputCollect | Configure media variables, adstock options, prophet regressors |
+| 3. Run robyn_mmm() | Launch Nevergrad optimization; generate Pareto frontier |
+| 4. Inspect Pareto models | Understand the NRMSE vs. decomp.rssd tradeoff |
+| 5. Select & plot a model | Pick your preferred model; generate one-pager output |
+| 6. Budget allocator | Run optimal reallocation given fixed total budget |
+| 7. Experiment | Change adstock type (geometric → Weibull); rerun; compare |
+
+---
+
+## Key Robyn Concepts
+
+### InputCollect
+The configuration object. You specify:
+- `dep_var` — outcome (revenue)
+- `dep_var_type` — "revenue" (vs. "conversion")
+- `date_var` — date column
+- `paid_media_spends` — spend columns
+- `paid_media_vars` — same columns (spend = proxy for impressions here)
+- `context_vars` — non-media regressors (price, holiday, trend)
+- `prophet_vars` — which prophet decomposition components to include ("trend", "season", "holiday")
+- `adstock` — type of adstock ("geometric" or "weibull_cdf" or "weibull_pdf")
+- `window_start` / `window_end` — modeling date range
+
+### Nevergrad Optimization
+Robyn doesn't fit one model — it runs thousands of candidate models varying:
+- Adstock decay parameters (per channel)
+- Hill function shape parameters (per channel)
+
+It minimizes two objectives simultaneously:
+1. **NRMSE** — normalized root mean squared error (fit quality)
+2. **decomp.rssd** — root sum of squared distance from expected share of effect (business reasonableness)
+
+The result is a **Pareto frontier**: models that are optimal trade-offs between fit and business plausibility.
+
+### Model Selection
+You pick a model from the Pareto frontier based on:
+- Low NRMSE (good fit)
+- Low decomp.rssd (plausible contribution shares)
+- Business intuition (do the channel ROIs make sense?)
+
+There's no single "right" answer — this is a feature, not a bug.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `Error: Python module 'nevergrad' not found` | Run `reticulate::py_install("nevergrad", pip=TRUE)` |
+| `prophet` install fails | Install `cmdstanr` first: `install.packages("cmdstanr")` |
+| Optimization runs but produces no outputs | Check `iterations` and `trials` in `robyn_mmm()` call |
+| Plots don't appear in RStudio | Set `plot_folder` to a writable path in `robyn_mmm()` |
+| `reticulate` can't find Python | Set `reticulate::use_python("/usr/bin/python3")` before loading Robyn |
+
+---
+
+## What to Record After Each Section
+
+Keep notes answering:
+
+1. How many models did Nevergrad produce? How spread out is the Pareto frontier?
+2. Which model did you select and why?
+3. Do the channel ROIs match the Meridian estimates? Where do they differ most?
+4. After switching to Weibull adstock — did any channel's ROI change significantly?
+5. Compare the budget optimizer recommendation to Meridian's. Are they consistent?
+
+---
+
+## Python Beta Alternative (robynpy)
+
+If you prefer to stay in Python:
+
+```bash
+pip install robynpy
+```
+
+The Python API is a translation of the R version. Key differences:
+- `InputCollect` becomes `RobynPy.InputCollect()`
+- `robyn_mmm()` becomes `RobynPy().run()`
+- Plot outputs are saved as PNG files (not interactive)
+- Documentation is thinner than the R version
+
+This exercise uses R, but the modeling concepts are identical.

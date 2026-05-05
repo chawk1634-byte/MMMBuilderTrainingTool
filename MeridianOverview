@@ -1,0 +1,136 @@
+# Meridian Exercise: Bayesian MMM with Google's Package
+
+## What You'll Build
+
+A full Bayesian Marketing Mix Model using [Google Meridian](https://developers.google.com/meridian/docs) — the same framework Google uses internally and shares with advertisers. By the end you will have:
+
+- Estimated ROI for 4 media channels with credible intervals
+- Response curves showing where each channel saturates
+- A budget reallocation recommendation
+- Hands-on experience tuning Bayesian priors
+
+**Estimated time:** 2–4 hours (including model fitting, which takes ~10–20 min on CPU)
+
+---
+
+## Prerequisites
+
+- Python 3.11, 3.12, or 3.13
+- Basic Python and pandas familiarity
+- Jupyter installed (`pip install jupyter`)
+- ~4 GB RAM free during model fitting
+
+> **macOS note:** Meridian uses TensorFlow, which does not support GPU on macOS. The model will run on CPU. This is fine for the exercise dataset (104 weeks) but will be slower on larger real datasets.
+
+---
+
+## Setup: Step by Step
+
+### 1. Create a virtual environment
+
+```bash
+cd mmm-exercises/meridian
+python3.11 -m venv venv
+source venv/bin/activate        # macOS/Linux
+# venv\Scripts\activate         # Windows
+```
+
+### 2. Install Meridian
+
+```bash
+pip install google-meridian
+```
+
+This pulls in TensorFlow (~500 MB), TensorFlow Probability, arviz, and other dependencies. It may take several minutes.
+
+**If you hit a version conflict:** Meridian pins TensorFlow tightly. Use a clean venv with no other packages installed.
+
+### 3. Verify the install
+
+```python
+python -c "import meridian; print(meridian.__version__)"
+```
+
+You should see a version string like `1.x.x`. If you get an import error, check that you're inside the venv.
+
+### 4. Generate the synthetic dataset
+
+```bash
+python generate_data.py
+```
+
+This creates `data/synthetic_mmm.csv` — 104 rows (2 years of weekly data) for Pinewave Co. Check the output:
+
+```bash
+head -5 data/synthetic_mmm.csv
+```
+
+You should see columns: `date, revenue, tv_spend, search_spend, social_spend, display_spend, price_index, holiday, trend`.
+
+### 5. Launch the notebook
+
+```bash
+jupyter notebook meridian_exercise.ipynb
+```
+
+---
+
+## Exercise Structure
+
+The notebook walks you through these sections:
+
+| Section | What You'll Do |
+|---|---|
+| 1. Explore the data | Plot spend and revenue; check for seasonality |
+| 2. Configure MeridianData | Wire up media, controls, and KPI columns |
+| 3. Set priors | Understand what each prior controls; use defaults first |
+| 4. Fit the model | Run MCMC sampling (~10–20 min on CPU) |
+| 5. Evaluate convergence | R-hat < 1.1 check; trace plots |
+| 6. Extract results | ROI by channel; response curves; budget optimizer |
+| 7. Experiments | Change one prior; refit; compare outputs |
+
+---
+
+## Key Meridian Concepts
+
+### MeridianData
+The data container object. You specify:
+- `kpi` — your outcome variable (revenue)
+- `media` — spend columns (one per channel)
+- `media_transformer` — how to transform raw spend (log, Hill, etc.)
+- `controls` — non-media variables (price, holiday, trend)
+- `time` — date column
+
+### Priors
+Meridian uses a Bayesian framework, meaning you specify prior beliefs about parameters before seeing data. For this exercise:
+- **ROI prior:** `HalfNormal(scale=1.0)` — assumes positive ROI, most likely between 0–3x
+- **Adstock decay prior:** `Beta(alpha=2, beta=2)` — centered around 0.5; allows fast or slow decay
+- **Saturation prior:** Uses Hill function shape parameters
+
+You'll learn what happens when you tighten or loosen these.
+
+### MCMC Fitting
+Meridian uses No-U-Turn Sampler (NUTS), a variant of Hamiltonian Monte Carlo. You'll run 4 chains × 500 samples. Convergence is good when R-hat < 1.1 for all parameters.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `ImportError: No module named 'meridian'` | You're outside the venv. Run `source venv/bin/activate` |
+| `ModuleNotFoundError: tensorflow` | Run `pip install tensorflow` inside the venv |
+| Model fitting hangs >30 min | Reduce `num_samples=200` in the notebook's fit call |
+| R-hat > 1.1 warnings | Try `num_warmup=500` (more warmup); usually fixes convergence |
+| Memory error during fit | Close other apps; or reduce to `num_chains=2` |
+
+---
+
+## What to Record After Each Section
+
+Keep notes (or use a markdown cell in the notebook) answering:
+
+1. Which channel has the highest estimated ROI? Does it match your intuition from the spend plots?
+2. How wide are the credible intervals? Which channels have the most uncertainty?
+3. After changing a prior in Section 7 — did the posterior shift the direction you expected?
+4. How does the budget optimizer's recommendation compare to actual spend in the data?

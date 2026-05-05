@@ -1,0 +1,377 @@
+# robyn_exercise.R
+# Pinewave Co. MMM Exercise — Meta Robyn
+#
+# Run this script section by section in RStudio, or source() it entirely.
+# Before running: execute generate_data.R to create data/synthetic_mmm.csv.
+#
+# Sections:
+#   1. Load & Explore Data
+#   2. Configure InputCollect
+#   3. Run Nevergrad Optimization (robyn_mmm)
+#   4. Inspect Pareto Frontier
+#   5. Select a Model & Plot Results
+#   6. Budget Allocator
+#   7. Experiment: Weibull Adstock
+
+library(Robyn)
+library(ggplot2)
+library(dplyr)
+
+
+# ── SECTION 1: Load & Explore Data ──────────────────────────────────────────
+
+cat("=== Section 1: Load & Explore Data ===\n")
+
+df <- read.csv("data/synthetic_mmm.csv", stringsAsFactors = FALSE)
+df$DATE <- as.Date(df$DATE)
+
+cat(sprintf("Rows: %d | Columns: %d\n", nrow(df), ncol(df)))
+cat("\nFirst 5 rows:\n")
+print(head(df, 5))
+
+cat("\nSummary statistics:\n")
+print(summary(df[, c("revenue","tv_spend","search_spend","social_spend","display_spend")]))
+
+# Plot revenue
+p_rev <- ggplot(df, aes(x = DATE, y = revenue)) +
+  geom_line(color = "steelblue", linewidth = 0.8) +
+  scale_y_continuous(labels = scales::dollar_format(scale = 1e-3, suffix = "K")) +
+  labs(title = "Pinewave Co. — Weekly Revenue", x = NULL, y = "Revenue") +
+  theme_minimal()
+print(p_rev)
+
+# Plot media spend stacked
+spend_long <- df |>
+  select(DATE, tv_spend, search_spend, social_spend, display_spend) |>
+  tidyr::pivot_longer(-DATE, names_to = "channel", values_to = "spend")
+
+p_spend <- ggplot(spend_long, aes(x = DATE, y = spend, fill = channel)) +
+  geom_bar(stat = "identity", width = 7) +
+  scale_y_continuous(labels = scales::dollar_format(scale = 1e-3, suffix = "K")) +
+  labs(title = "Weekly Media Spend by Channel", x = NULL, y = "Spend", fill = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+print(p_spend)
+
+# Raw correlations
+cat("\nRaw spend-revenue correlations (pre-adstock):\n")
+channels <- c("tv_spend","search_spend","social_spend","display_spend")
+cors <- sapply(channels, function(ch) cor(df[[ch]], df$revenue))
+print(round(cors, 3))
+
+# REFLECT: Which channel has highest raw correlation? Is that expected?
+# REFLECT: Why might raw correlation mislead you about true ROI?
+
+
+# ── SECTION 2: Configure InputCollect ────────────────────────────────────────
+
+cat("\n=== Section 2: Configure InputCollect ===\n")
+
+# Robyn expects the date column named exactly as specified in date_var
+# dep_var = outcome; dep_var_type = "revenue" or "conversion"
+
+InputCollect <- robyn_inputs(
+  dt_input       = df,
+  dt_holidays    = dt_prophet_holidays,  # built-in Robyn holiday data
+
+  date_var       = "DATE",
+  dep_var        = "revenue",
+  dep_var_type   = "revenue",
+
+  # Prophet components: trend, seasonality, holidays
+  prophet_vars   = c("trend", "season", "holiday"),
+  prophet_country = "US",
+
+  # Context (non-media) variables
+  context_vars   = c("price_index"),
+
+  # Media spend columns
+  paid_media_spends = c("tv_spend", "search_spend", "social_spend", "display_spend"),
+  paid_media_vars   = c("tv_spend", "search_spend", "social_spend", "display_spend"),
+
+  # Adstock type: "geometric" (one decay param per channel) or "weibull_cdf" / "weibull_pdf"
+  adstock        = "geometric",
+
+  # Hyperparameter search bounds (applied to all channels unless overridden)
+  # theta = adstock decay | alpha = Hill slope | gamma = Hill half-saturation
+  hyperparameters = list(
+    tv_spend_alphas    = c(0.5, 3.0),   # Hill slope range
+    tv_spend_gammas    = c(0.3, 1.0),   # Hill saturation (as fraction of spend range)
+    tv_spend_thetas    = c(0.3, 0.95),  # adstock decay range
+    search_spend_alphas  = c(0.5, 3.0),
+    search_spend_gammas  = c(0.3, 1.0),
+    search_spend_thetas  = c(0.1, 0.70),  # search decays faster
+    social_spend_alphas  = c(0.5, 3.0),
+    social_spend_gammas  = c(0.3, 1.0),
+    social_spend_thetas  = c(0.2, 0.80),
+    display_spend_alphas = c(0.5, 3.0),
+    display_spend_gammas = c(0.3, 1.0),
+    display_spend_thetas = c(0.1, 0.70)
+  ),
+
+  # Date range for modeling
+  window_start   = as.Date("2022-01-03"),
+  window_end     = as.Date("2023-12-25"),
+
+  # Calibration: optional; skipping for this exercise
+  calibration_input = NULL
+)
+
+print(InputCollect)
+
+# REFLECT: What does the 'prophet_vars' setting do?
+# REFLECT: Why do we set a tighter theta range for search vs. TV?
+# REFLECT: What does gamma represent in the Hill function?
+
+
+# ── SECTION 3: Run Nevergrad Optimization ─────────────────────────────────────
+
+cat("\n=== Section 3: Run Nevergrad Optimization ===\n")
+cat("This may take 5–15 minutes depending on iterations setting.\n")
+
+# Create output directory for Robyn's plots
+plot_dir <- file.path(getwd(), "robyn_output")
+if (!dir.exists(plot_dir)) dir.create(plot_dir)
+
+OutputModels <- robyn_run(
+  InputCollect   = InputCollect,
+  cores          = 4,         # parallel cores; reduce to 2 if memory constrained
+  iterations     = 2000,      # Nevergrad iterations per trial; increase for better results
+  trials         = 5,         # number of independent optimization runs
+  ts_validation  = TRUE,      # hold out last 10% of data for validation
+  plot_folder    = plot_dir,
+  plot_pareto    = TRUE,
+)
+
+cat("Optimization complete.\n")
+# Pareto frontier count is available after robyn_outputs() in Section 4
+
+# REFLECT: What do 'iterations' and 'trials' control?
+# REFLECT: What is ts_validation doing? Why hold out data?
+
+
+# ── SECTION 4: Inspect the Pareto Frontier ────────────────────────────────────
+
+cat("\n=== Section 4: Inspect Pareto Frontier ===\n")
+
+# Robyn's Pareto plot shows NRMSE (fit quality) vs. decomp.rssd (business plausibility)
+# Lower NRMSE = better fit | Lower decomp.rssd = more plausible contribution shares
+
+OutputCollect <- robyn_outputs(
+  InputCollect  = InputCollect,
+  OutputModels  = OutputModels,
+  pareto_fronts = "auto",        # auto-select number of Pareto fronts to show
+  csv_out       = "pareto",
+  clusters      = TRUE,          # cluster similar models together
+  plot_n_top    = 5,             # plot top 5 model one-pagers
+  plot_folder   = plot_dir,
+)
+
+# See Pareto candidates
+pareto_models <- OutputCollect$allPareto$resultHypParam
+cat("\nPareto frontier models:\n")
+print(pareto_models[, c("solID","nrmse","decomp.rssd","rsq_train","rsq_val")])
+
+# REFLECT: Look at the NRMSE column. What range is acceptable?
+# REFLECT: What happens if you pick the model with the lowest NRMSE?
+#          Is that always the best choice? (Hint: check decomp.rssd)
+# REFLECT: How do you interpret decomp.rssd?
+
+
+# ── SECTION 5: Select a Model & Plot Results ──────────────────────────────────
+
+cat("\n=== Section 5: Select a Model ===\n")
+
+# Pick a model from the Pareto frontier.
+# Strategy: choose one with NRMSE < 0.15 AND low decomp.rssd
+# The cluster centers are often good picks.
+#
+# Replace 'YOUR_MODEL_ID' with the solID from the Pareto table above.
+# Example: select_model_id <- "1_5_3"
+
+# Identify a good candidate automatically (lowest combined score)
+pareto_scores <- pareto_models |>
+  mutate(combined = scale(nrmse) + scale(decomp.rssd)) |>
+  arrange(combined)
+
+select_model_id <- pareto_scores$solID[1]
+cat(sprintf("Auto-selected model: %s\n", select_model_id))
+cat("(Override this by setting select_model_id manually based on your judgment.)\n")
+
+# Pull full results for selected model
+selected <- robyn_onepagers(
+  InputCollect  = InputCollect,
+  OutputCollect = OutputCollect,
+  select_model  = select_model_id,
+  export        = TRUE,
+  plot_folder   = plot_dir,
+)
+
+# ROI summary
+cat("\nEstimated ROI by channel (selected model):\n")
+roi_df <- OutputCollect$xDecompAgg |>
+  filter(solID == select_model_id, rn %in% c("tv_spend","search_spend","social_spend","display_spend")) |>
+  select(rn, roi_mean, roi_total)
+print(round(roi_df, 3))
+
+# Contribution decomposition
+cat("\nRevenue contribution decomposition:\n")
+decomp_df <- OutputCollect$xDecompAgg |>
+  filter(solID == select_model_id) |>
+  select(rn, xDecompPerc) |>
+  arrange(desc(xDecompPerc))
+print(round(decomp_df, 4))
+
+# Hyperparameters recovered by the model
+cat("\nRecovered hyperparameters (adstock decay + Hill params):\n")
+hyp_df <- pareto_models |>
+  filter(solID == select_model_id) |>
+  select(starts_with("tv_spend"), starts_with("search_spend"),
+         starts_with("social_spend"), starts_with("display_spend"))
+print(round(t(hyp_df), 3))
+
+# REFLECT: Do the recovered adstock decays make intuitive sense?
+# REFLECT: Compare ROI ranking to raw correlations from Section 1.
+#          Did the model reorder them? Why?
+# REFLECT: What % of revenue is attributed to baseline vs. media?
+
+
+# ── SECTION 6: Budget Allocator ───────────────────────────────────────────────
+
+cat("\n=== Section 6: Budget Allocator ===\n")
+
+total_budget <- sum(df$tv_spend) + sum(df$search_spend) +
+                sum(df$social_spend) + sum(df$display_spend)
+
+cat(sprintf("Total budget to reallocate: $%s\n", format(round(total_budget), big.mark=",")))
+
+AllocatorCollect <- robyn_allocator(
+  InputCollect  = InputCollect,
+  OutputCollect = OutputCollect,
+  select_model  = select_model_id,
+  scenario      = "max_response",      # maximize revenue given fixed total budget
+  total_budget  = total_budget,        # same total as historical
+  date_range    = "all",
+  export        = TRUE,
+  plot_folder   = plot_dir,
+)
+
+cat("\nOptimal budget allocation vs. actual:\n")
+alloc_summary <- AllocatorCollect$dt_optimOut |>
+  select(channels, histSpend, optmSpend, optmSpendShareUnit, roas_mean)
+print(round(alloc_summary, 2))
+
+# REFLECT: Which channel gets more budget in the optimal allocation?
+# REFLECT: How does this compare to Meridian's budget optimizer result?
+# REFLECT: What business constraints might make the optimal allocation impractical?
+
+
+# ── SECTION 7: Experiment — Weibull Adstock ───────────────────────────────────
+
+cat("\n=== Section 7: Experiment — Weibull Adstock ===\n")
+cat("Switching adstock type from 'geometric' to 'weibull_cdf'.\n")
+cat("Weibull allows for a delayed peak (buildup) before decay — more flexible than geometric.\n")
+
+# Weibull requires two parameters per channel instead of one:
+# - shape (controls buildup speed; <1 = immediate peak; >1 = delayed peak)
+# - scale (controls how quickly it decays)
+
+InputCollect_weibull <- robyn_inputs(
+  dt_input       = df,
+  dt_holidays    = dt_prophet_holidays,
+  date_var       = "DATE",
+  dep_var        = "revenue",
+  dep_var_type   = "revenue",
+  prophet_vars   = c("trend", "season", "holiday"),
+  prophet_country = "US",
+  context_vars   = c("price_index"),
+  paid_media_spends = c("tv_spend","search_spend","social_spend","display_spend"),
+  paid_media_vars   = c("tv_spend","search_spend","social_spend","display_spend"),
+
+  # Weibull CDF adstock
+  adstock        = "weibull_cdf",
+
+  hyperparameters = list(
+    tv_spend_alphas    = c(0.5, 3.0),
+    tv_spend_gammas    = c(0.3, 1.0),
+    tv_spend_shapes    = c(0.5, 3.0),   # Weibull shape (buildup)
+    tv_spend_scales    = c(0.0, 0.5),   # Weibull scale (decay)
+    search_spend_alphas  = c(0.5, 3.0),
+    search_spend_gammas  = c(0.3, 1.0),
+    search_spend_shapes  = c(0.5, 2.0),
+    search_spend_scales  = c(0.0, 0.3),
+    social_spend_alphas  = c(0.5, 3.0),
+    social_spend_gammas  = c(0.3, 1.0),
+    social_spend_shapes  = c(0.5, 2.5),
+    social_spend_scales  = c(0.0, 0.4),
+    display_spend_alphas = c(0.5, 3.0),
+    display_spend_gammas = c(0.3, 1.0),
+    display_spend_shapes = c(0.5, 2.0),
+    display_spend_scales = c(0.0, 0.3)
+  ),
+  window_start   = as.Date("2022-01-03"),
+  window_end     = as.Date("2023-12-25"),
+)
+
+plot_dir_wb <- file.path(getwd(), "robyn_output_weibull")
+if (!dir.exists(plot_dir_wb)) dir.create(plot_dir_wb)
+
+OutputModels_wb <- robyn_run(
+  InputCollect   = InputCollect_weibull,
+  cores          = 4,
+  iterations     = 2000,
+  trials         = 5,
+  ts_validation  = TRUE,
+  plot_folder    = plot_dir_wb,
+  plot_pareto    = TRUE,
+)
+
+OutputCollect_wb <- robyn_outputs(
+  InputCollect  = InputCollect_weibull,
+  OutputModels  = OutputModels_wb,
+  pareto_fronts = "auto",
+  clusters      = TRUE,
+  plot_n_top    = 3,
+  plot_folder   = plot_dir_wb,
+)
+
+# Compare best model ROI: geometric vs. Weibull
+pareto_wb    <- OutputCollect_wb$allPareto$resultHypParam
+best_wb_id   <- pareto_wb |>
+  mutate(combined = scale(nrmse) + scale(decomp.rssd)) |>
+  arrange(combined) |>
+  pull(solID) |>
+  first()
+
+roi_geo <- OutputCollect$xDecompAgg |>
+  filter(solID == select_model_id,
+         rn %in% c("tv_spend","search_spend","social_spend","display_spend")) |>
+  select(rn, roi_mean)
+
+roi_wb <- OutputCollect_wb$xDecompAgg |>
+  filter(solID == best_wb_id,
+         rn %in% c("tv_spend","search_spend","social_spend","display_spend")) |>
+  select(rn, roi_mean)
+
+comparison <- merge(roi_geo, roi_wb, by = "rn", suffixes = c("_geometric","_weibull"))
+comparison$true_roi <- c(2.1, 1.4, 2.8, 4.3)[match(comparison$rn,
+  c("tv_spend","display_spend","social_spend","search_spend"))]
+
+cat("\nROI Comparison: Geometric vs. Weibull Adstock\n")
+print(round(comparison, 3))
+
+# REFLECT: Did Weibull produce meaningfully different ROI estimates?
+# REFLECT: Which adstock type had better NRMSE? Why might that be?
+# REFLECT: For TV (slow buildup + slow decay), which adstock type is more theoretically appropriate?
+# REFLECT: Does more flexibility in Weibull always lead to better results? What's the tradeoff?
+
+
+# ── WRAP-UP ───────────────────────────────────────────────────────────────────
+
+cat("\n=== Exercise Complete ===\n")
+cat("Output files saved to:", plot_dir, "\n")
+cat("\nNext steps:\n")
+cat("  1. Open OVERVIEW.md and reveal the ground-truth parameters\n")
+cat("  2. Compare your Robyn ROI estimates to the true values\n")
+cat("  3. Open meridian/meridian_exercise.ipynb and compare Robyn vs. Meridian results\n")
+cat("  4. Which package got closer to the true ROI for each channel?\n")
