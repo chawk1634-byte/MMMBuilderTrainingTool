@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candidate Brief — Live Edit</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:   #C81026;
+    --ink:   #1a1a1e;
+    --body:  #3d3d42;
+    --muted: #6b7280;
+    --rule:  #e2e0dc;
+    --bg:    #f8f7f5;
+    --card:  #ffffff;
+  }
+
+  html, body {
+    background: var(--bg);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--body);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  @page { size: letter; margin: 0.55in 0.65in; }
+
+  /* ─── Floating toolbar ───────────────────────── */
+  .toolbar {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink);
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  }
+  .toolbar-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-right: 4px;
+  }
+  .toolbar button {
+    border: none;
+    border-radius: 5px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .toolbar button:hover { opacity: .85; }
+  .btn-print { background: var(--red); color: white; }
+  .btn-reset { background: #3a3a3f; color: #e8e0d5; }
+  .toolbar .saved-indicator {
+    font-size: 11px;
+    color: #34d399;
+    opacity: 0;
+    transition: opacity .4s;
+    white-space: nowrap;
+  }
+  .toolbar .saved-indicator.show { opacity: 1; }
+
+  @media print {
+    .toolbar { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: 100%; }
+  }
+
+  /* ─── Editable highlight ─────────────────────── */
+  [contenteditable]:hover {
+    outline: 1.5px dashed #d1d5db;
+    border-radius: 2px;
+  }
+  [contenteditable]:focus {
+    outline: 2px solid var(--red);
+    border-radius: 2px;
+    background: #fffaf9;
+  }
+  [contenteditable]:focus { cursor: text; }
+
+  /* ─── Page ───────────────────────────────────── */
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 44px 52px 52px;
+    background: var(--card);
+    min-height: 100vh;
+  }
+
+  /* ─── Header ─────────────────────────────────── */
+  .hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 18px;
+    border-bottom: 3px solid var(--ink);
+    margin-bottom: 22px;
+  }
+  .name {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -.3px;
+    margin-bottom: 2px;
+  }
+  .role-target {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+  .hdr-right {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .hdr-right strong {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  /* ─── Section headings ───────────────────────── */
+  h2 {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin: 22px 0 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  /* ─── Opening ────────────────────────────────── */
+  .opening {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .opening p + p { margin-top: 8px; }
+
+  /* ─── Work table ─────────────────────────────── */
+  .work-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .work-table thead tr { background: var(--ink); }
+  .work-table thead th {
+    color: #e8e0d5;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .work-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .work-table tbody tr:last-child td { border-bottom: none; }
+  .work-table tbody tr:nth-child(even) td { background: #faf9f7; }
+  .artifact-name {
+    font-weight: 700;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 1px;
+  }
+  .artifact-type {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #f0e6e8;
+    color: var(--red);
+    margin: 1px 2px 1px 0;
+    white-space: nowrap;
+  }
+  .tag.gray { background: #f3f4f6; color: var(--muted); }
+
+  /* ─── Coverage grid ──────────────────────────── */
+  .cov-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .cov-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .cov-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .cov-item strong { color: var(--ink); }
+
+  /* ─── Closing bar ────────────────────────────── */
+  .closing-bar {
+    margin-top: 22px;
+    background: var(--ink);
+    border-radius: 5px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .closing-bar p {
+    font-size: 12.5px;
+    color: #d1d5db;
+    line-height: 1.55;
+    flex: 1;
+  }
+  .closing-bar p strong { color: #ffffff; }
+  .closing-bar .date-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating toolbar -->
+<div class="toolbar">
+  <span class="toolbar-label">Live Edit</span>
+  <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
+  <button class="btn-reset" onclick="resetContent()">Reset</button>
+  <span class="saved-indicator" id="saved-msg">Saved</span>
+</div>
+
+<div class="page" id="page-content">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="name" contenteditable="true" spellcheck="false">[Your Name]</div>
+      <div class="role-target" contenteditable="true" spellcheck="false">Candidate — Senior Director, Consumer Insights · Shake Shack</div>
+    </div>
+    <div class="hdr-right" contenteditable="true" spellcheck="false">
+      <strong>Prepared</strong>
+      April 2026<br>
+      [email] · [phone]
+    </div>
+  </div>
+
+  <!-- The Case -->
+  <h2>The Case</h2>
+  <div class="opening">
+    <p contenteditable="true" spellcheck="true">This role requires a leader who can integrate consumer research and behavioral analytics into a single, coherent view of the guest and translate that view into decisions that drive acquisition, retention, and brand growth. Most candidates anchor in one discipline. This portfolio demonstrates end-to-end capability across all three layers of the function: customer intelligence, measurement rigor, and strategic communication at the executive level.</p>
+    <p contenteditable="true" spellcheck="true">Every deliverable below was built against Shake Shack specifically. This is not a generic portfolio. It reflects a working knowledge of the brand, its guest base, its competitive context, and the measurement infrastructure required to serve the business.</p>
+  </div>
+
+  <!-- Work Product -->
+  <h2>Work Product</h2>
+  <table class="work-table">
+    <thead>
+      <tr>
+        <th style="width:30%">Deliverable</th>
+        <th style="width:46%">Summary</th>
+        <th style="width:24%">JD Coverage</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <span class="artifact-name" contenteditable="true" spellcheck="false">Guest Segmentation Study</span>
+          <span class="artifact-type" contenteditable="true" spellcheck="false">Research Deliverable</span>
+        </td>
+        <td contenteditable="true" spellcheck="true">Full needs-based segmentation using simulated n=1,000 panel data. Five segments with cross-tab analysis, demographic profiles, activation playbook, and an interactive typing tool. Structured as a consultant-grade deliverable.</td>
+        <td contenteditable="true" spellcheck="false">
+          <span class="tag">Segmentation</span>
+          <span class="tag">Research Methods</span>
+          <span class="tag">Exec Storytelling</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="artifact-name" contenteditable="true" spellcheck="false">CRM Behavioral Analysis</span>
+          <span class="artifact-type" contenteditable="true" spellcheck="false">Analytics + Presentation</span>
+        </td>
+        <td contenteditable="true" spellcheck="true">Analysis of n=10,000 CRM records connecting item purchase behavior to customer lifetime value. Includes decile tiering, Value Index framework, spend and visit concentration, and an 8-slide executive presentation formatted for a CMO business review.</td>
+        <td contenteditable="true" spellcheck="false">
+          <span class="tag">CRM / Loyalty Data</span>
+          <span class="tag">LTV / Retention</span>
+          <span class="tag">Exec Presentation</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="artifact-name" contenteditable="true" spellcheck="false">Cohort Retention Analysis</span>
+          <span class="artifact-type" contenteditable="true" spellcheck="false">Analytics</span>
+        </td>
+        <td contenteditable="true" spellcheck="true">Eight acquisition cohorts tracked across Month 1, 3, 6, and 12 retention and LTV. Includes a retention heatmap, LTV improvement trend, and first-purchase category analysis showing the predictive value of menu behavior on long-term customer value.</td>
+        <td contenteditable="true" spellcheck="false">
+          <span class="tag">Cohort Analysis</span>
+          <span class="tag">Acquisition Quality</span>
+          <span class="tag">LTV / Retention</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="artifact-name" contenteditable="true" spellcheck="false">Brand Health Tracking Framework</span>
+          <span class="artifact-type" contenteditable="true" spellcheck="false">Research Framework</span>
+        </td>
+        <td contenteditable="true" spellcheck="true">A continuous tracking system covering the full brand funnel from unaided awareness through NPS, six brand equity dimensions, a competitive benchmarking architecture, pre-specified decision triggers with defined owners, and a 90-day setup plan.</td>
+        <td contenteditable="true" spellcheck="false">
+          <span class="tag">Brand Health</span>
+          <span class="tag">Research Design</span>
+          <span class="tag">Decision Triggers</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- JD Alignment -->
+  <h2>JD Alignment</h2>
+  <div class="cov-grid">
+    <div class="cov-item"><div class="cov-dot"></div><span contenteditable="true" spellcheck="true"><strong>Guest segmentation frameworks:</strong> Full five-segment study built and delivered as an actionable research artifact</span></div>
+    <div class="cov-item"><div class="cov-dot"></div><span contenteditable="true" spellcheck="true"><strong>CRM, loyalty, and transactional data:</strong> n=10,000 behavioral analysis with deciles, Value Index, and LTV modeling</span></div>
+    <div class="cov-item"><div class="cov-dot"></div><span contenteditable="true" spellcheck="true"><strong>Retention and lifetime value:</strong> Eight-cohort analysis with category-level LTV drivers identified and quantified</span></div>
+    <div class="cov-item"><div class="cov-dot"></div><span contenteditable="true" spellcheck="true"><strong>Brand health tracking:</strong> Full framework with funnel metrics, equity dimensions, decision triggers, and 90-day setup plan</span></div>
+    <div class="cov-item"><div class="cov-dot"></div><span contenteditable="true" spellcheck="true"><strong>Research methodologies:</strong> Needs-based segmentation, factor analysis, brand tracking instrument design</span></div>
+    <div class="cov-item"><div class="cov-dot"></div><span contenteditable="true" spellcheck="true"><strong>Executive-level storytelling:</strong> CMO-ready Canva presentation, structured memos, and a consultant-grade segmentation report</span></div>
+  </div>
+
+  <!-- Closing -->
+  <div class="closing-bar">
+    <p contenteditable="true" spellcheck="true">Every deliverable in this portfolio was built for Shake Shack specifically. The goal was to demonstrate not just analytical capability but <strong>judgment</strong>: knowing which questions matter, how to answer them rigorously, and how to make the answers drive decisions rather than describe data.</p>
+    <div class="date-tag" contenteditable="true" spellcheck="false">April 2026</div>
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'candidate_brief_v2';
+
+  // ─── Auto-save to localStorage on any edit ───────
+  document.getElementById('page-content').addEventListener('input', () => {
+    localStorage.setItem(STORAGE_KEY, document.getElementById('page-content').innerHTML);
+    const msg = document.getElementById('saved-msg');
+    msg.classList.add('show');
+    clearTimeout(msg._t);
+    msg._t = setTimeout(() => msg.classList.remove('show'), 1800);
+  });
+
+  // ─── Restore saved content on load ───────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) document.getElementById('page-content').innerHTML = saved;
+  });
+
+  // ─── Reset to original ────────────────────────────
+  const ORIGINAL = document.getElementById('page-content').innerHTML;
+  function resetContent() {
+    if (confirm('Reset all edits and restore original content?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('page-content').innerHTML = ORIGINAL;
+    }
+  }
+</script>
+</body>
+</html>

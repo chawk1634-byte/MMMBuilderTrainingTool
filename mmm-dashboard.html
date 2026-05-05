@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shake Shack · MMM Dashboard · US</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f1f5f9;--card:#fff;--border:#e2e8f0;
+  --ink:#0f172a;--body:#334155;--muted:#64748b;--faint:#94a3b8;
+  --red:#C81026;--blue:#3b82f6;--purple:#8b5cf6;
+  --amber:#f59e0b;--green:#10b981;--cyan:#06b6d4;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--body);font-size:14px;line-height:1.6;}
+
+/* Header */
+.dash-header{background:var(--card);border-bottom:1px solid var(--border);padding:0 32px;}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 14px;border-bottom:1px solid var(--border);}
+.header-left{display:flex;align-items:center;gap:10px;}
+.dash-title{font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-.3px;}
+.dash-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.badge{font-size:10px;font-weight:700;letter-spacing:.5px;border-radius:4px;padding:3px 10px;white-space:nowrap;}
+.badge-red{background:#fef2f2;color:var(--red);border:1px solid #fecaca;}
+.badge-blue{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+.kpi-strip{display:flex;padding:14px 0 12px;}
+.kpi{flex:1;padding:0 22px;border-right:1px solid var(--border);}
+.kpi:first-child{padding-left:0;}
+.kpi:last-child{border-right:none;}
+.kpi-val{font-size:26px;font-weight:900;color:var(--ink);line-height:1;margin-bottom:3px;}
+.kpi-val.accent{color:var(--red);}
+.kpi-val.green{color:var(--green);}
+.kpi-lbl{font-size:11px;color:var(--muted);}
+.kpi-delta{font-size:10.5px;font-weight:700;color:var(--green);margin-top:1px;}
+.kpi-delta.neg{color:var(--red);}
+
+/* Tabs */
+.tab-nav{background:var(--card);border-bottom:2px solid var(--border);padding:0 32px;display:flex;overflow-x:auto;}
+.tab-btn{padding:13px 20px;font-size:12.5px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;font-family:inherit;transition:color .12s,border-color .12s;}
+.tab-btn:hover{color:var(--ink);}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red);}
+
+/* Layout */
+main{max-width:1280px;margin:0 auto;padding:24px 24px 72px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.module{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:18px;}
+.mod-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.mod-title{font-size:13px;font-weight:700;color:var(--ink);}
+.mod-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+
+/* Chips */
+.chip{border-radius:8px;padding:7px 13px;font-size:11.5px;font-weight:600;line-height:1.5;text-align:right;flex-shrink:0;margin-left:16px;}
+.chip strong{font-size:15px;font-weight:900;display:block;margin-bottom:1px;}
+.chip.green{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.chip.green strong{color:#14532d;}
+.chip.blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;}
+.chip.blue strong{color:#1e3a8a;}
+.chip.amber{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
+.chip.amber strong{color:#78350f;}
+.chip.red{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+.chip.red strong{color:#7f1d1d;}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none;transition:opacity .15s;}
+.leg-item:hover{color:var(--ink);}
+.leg-item.dimmed{opacity:.28;}
+.leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
+
+/* Table */
+.data-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.data-tbl th{background:var(--ink);color:#e8e0d5;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:9px 14px;text-align:left;}
+.data-tbl td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-tbl tr:last-child td{border-bottom:none;}
+.data-tbl tr:nth-child(even) td{background:#faf9f7;}
+.num{font-weight:700;color:var(--ink);}
+.pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;}
+.trend-up{color:var(--green);}
+.trend-dn{color:var(--red);}
+
+/* Scenario planner */
+.sp-summary{background:var(--ink);border-radius:12px;padding:22px 28px;margin-bottom:20px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+.sp-sum-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6b7280;margin-bottom:4px;}
+.sp-sum-val{font-size:22px;font-weight:900;color:#fff;line-height:1;margin-bottom:3px;}
+.sp-sum-delta{font-size:11px;font-weight:700;}
+.sp-sum-delta.up{color:#34d399;}
+.sp-sum-delta.down{color:#f87171;}
+.sp-sum-delta.flat{color:#6b7280;}
+.sp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.sp-ch{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;border-top:4px solid transparent;}
+.sp-ch-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sp-ch-name{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:7px;}
+.sp-ch-dot{width:10px;height:10px;border-radius:50%;}
+.sp-amounts{display:flex;align-items:baseline;gap:6px;margin-bottom:8px;}
+.sp-val{font-size:18px;font-weight:900;color:var(--ink);}
+.sp-base{font-size:11px;color:var(--muted);}
+.sp-slider{width:100%;cursor:pointer;margin-bottom:4px;}
+.sp-slider-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);}
+.sp-ch-rev{font-size:11.5px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.sp-ch-rev strong{color:var(--ink);}
+.sp-delta-tag{font-size:10.5px;font-weight:700;margin-left:4px;}
+
+/* Tooltip */
+#tt{position:fixed;background:var(--ink);color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.65;pointer-events:none;z-index:9999;display:none;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.28);}
+#tt strong{font-size:13px;display:block;margin-bottom:3px;color:#fff;}
+#tt .tr{display:flex;justify-content:space-between;gap:14px;}
+#tt .tv{font-weight:700;color:#93c5fd;}
+
+svg{overflow:visible;display:block;}
+@media(max-width:960px){.two-col,.sp-grid{grid-template-columns:1fr 1fr;}.sp-summary{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.two-col,.sp-grid,.sp-summary{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="dash-header">
+  <div class="header-top">
+    <div class="header-left">
+      <div>
+        <div class="dash-title">Shake Shack · Marketing Mix Model</div>
+        <div class="dash-sub">US market only · $40M annual media spend · 2023–2025 · Monthly model output</div>
+      </div>
+      <span class="badge badge-blue" style="margin-left:8px;">US ONLY</span>
+      <span class="badge badge-red" style="margin-left:4px;">CONFIDENTIAL</span>
+    </div>
+  </div>
+  <div class="kpi-strip" id="kpi-strip"></div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('overview',this)">01 Overview</button>
+  <button class="tab-btn" onclick="switchTab('decomp',this)">02 Revenue Decomp</button>
+  <button class="tab-btn" onclick="switchTab('roi',this)">03 Channel ROI</button>
+  <button class="tab-btn" onclick="switchTab('dr',this)">04 Diminishing Returns</button>
+  <button class="tab-btn" onclick="switchTab('planner',this)">05 Scenario Planner</button>
+</div>
+
+<main>
+
+<!-- ══ TAB 1: OVERVIEW ══════════════════════════════ -->
+<div class="tab-panel active" id="tab-overview">
+
+  <div class="module">
+    <div class="mod-header">
+      <div>
+        <div class="mod-title">Monthly Revenue Trend · 2023–2025</div>
+        <div class="mod-sub">Stacked by base + channel contribution · US total revenue ($M)</div>
+      </div>
+      <div class="chip green"><strong id="rev-cagr"></strong>Revenue CAGR 2023–2025</div>
+    </div>
+    <svg id="overview-chart" width="100%" viewBox="0 0 1140 280"></svg>
+    <div class="legend" id="overview-legend"></div>
+  </div>
+
+  <div class="two-col">
+    <div class="module" style="margin-bottom:0">
+      <div class="mod-header">
+        <div><div class="mod-title">Monthly Visits · 2023–2025</div><div class="mod-sub">US guest visits (M) · all channels</div></div>
+        <div class="chip blue"><strong id="visits-delta"></strong>YoY 2024→2025</div>
+      </div>
+      <svg id="visits-chart" width="100%" viewBox="0 0 520 200"></svg>
+    </div>
+    <div class="module" style="margin-bottom:0">
+      <div class="mod-header">
+        <div><div class="mod-title">Monthly Transactions · 2023–2025</div><div class="mod-sub">US transactions (M) · $16 avg check</div></div>
+        <div class="chip amber"><strong id="txn-delta"></strong>YoY 2024→2025</div>
+      </div>
+      <svg id="txn-chart" width="100%" viewBox="0 0 520 200"></svg>
+    </div>
+  </div>
+
+  <div class="module">
+    <div class="mod-header">
+      <div><div class="mod-title">Annual Media Spend Mix · Channel Allocation Over Time</div><div class="mod-sub">$M spend per channel · shift from Linear TV toward Social and Search</div></div>
+    </div>
+    <div id="spend-mix-table"></div>
+  </div>
+
+</div>
+
+<!-- ══ TAB 2: REVENUE DECOMP ════════════════════════ -->
+<div class="tab-panel" id="tab-decomp">
+
+  <div class="module">
+    <div class="mod-header">
+      <div><div class="mod-title">Monthly Revenue Decomposition</div><div class="mod-sub">Base revenue + incremental contribution by channel · $M</div></div>
+    </div>
+    <svg id="decomp-chart" width="100%" viewBox="0 0 1140 300"></svg>
+    <div class="legend" id="decomp-legend"></div>
+  </div>
+
+  <div class="module">
+    <div class="mod-header">
+      <div><div class="mod-title">Annual Revenue Contribution Waterfall · 2025</div><div class="mod-sub">Base to total · incremental lift by channel · US revenue ($M)</div></div>
+      <div class="chip green"><strong>$296M</strong>Total US Revenue 2025</div>
+    </div>
+    <svg id="waterfall-chart" width="100%" viewBox="0 0 1100 320"></svg>
+  </div>
+
+  <div class="module">
+    <div class="mod-header"><div><div class="mod-title">Annual Revenue Summary</div><div class="mod-sub">Base, incremental, and total by channel and year</div></div></div>
+    <div id="decomp-table"></div>
+  </div>
+
+</div>
+
+<!-- ══ TAB 3: CHANNEL ROI ════════════════════════════ -->
+<div class="tab-panel" id="tab-roi">
+
+  <div class="two-col">
+    <div class="module" style="margin-bottom:0">
+      <div class="mod-header">
+        <div><div class="mod-title">Incremental ROAS by Channel · 2025</div><div class="mod-sub">Attributed revenue ÷ media spend</div></div>
+        <div class="chip blue"><strong>3.7×</strong>Blended portfolio</div>
+      </div>
+      <svg id="roas-chart" width="100%" viewBox="0 0 500 320"></svg>
+    </div>
+    <div class="module" style="margin-bottom:0">
+      <div class="mod-header">
+        <div><div class="mod-title">ROI by Channel · 2025</div><div class="mod-sub">(Incremental revenue − spend) ÷ spend</div></div>
+        <div class="chip amber"><strong>2.7×</strong>Blended portfolio</div>
+      </div>
+      <svg id="roi-chart" width="100%" viewBox="0 0 500 320"></svg>
+    </div>
+  </div>
+
+  <div class="module">
+    <div class="mod-header"><div><div class="mod-title">Full Channel Performance Table · 2023–2025</div><div class="mod-sub">Spend, attributed revenue, ROAS, ROI, and YoY trend</div></div></div>
+    <div id="roi-table"></div>
+  </div>
+
+</div>
+
+<!-- ══ TAB 4: DIMINISHING RETURNS ═══════════════════ -->
+<div class="tab-panel" id="tab-dr">
+
+  <div class="module">
+    <div class="mod-header">
+      <div>
+        <div class="mod-title">Diminishing Returns Curves · All Channels</div>
+        <div class="mod-sub">Incremental revenue ($M) at each spend level · current spend marked with dot · click legend to isolate</div>
+      </div>
+      <div class="chip red"><strong>Linear TV</strong>Most saturated channel</div>
+    </div>
+    <svg id="dr-chart" width="100%" viewBox="0 0 1100 400"></svg>
+    <div class="legend" id="dr-legend"></div>
+  </div>
+
+  <div class="module">
+    <div class="mod-header"><div><div class="mod-title">Marginal Return at Current Spend</div><div class="mod-sub">Each additional $1 of spend at current allocation · lower = more saturated</div></div></div>
+    <div id="marginal-table"></div>
+  </div>
+
+</div>
+
+<!-- ══ TAB 5: SCENARIO PLANNER ══════════════════════ -->
+<div class="tab-panel" id="tab-planner">
+
+  <div class="sp-summary" id="sp-summary">
+    <div><div class="sp-sum-lbl">Total Spend</div><div class="sp-sum-val" id="sp-total-spend">$40.0M</div><div class="sp-sum-delta flat" id="sp-spend-delta">Baseline</div></div>
+    <div><div class="sp-sum-lbl">Projected Revenue</div><div class="sp-sum-val" id="sp-proj-rev">$296M</div><div class="sp-sum-delta flat" id="sp-rev-delta">Baseline</div></div>
+    <div><div class="sp-sum-lbl">Incremental Rev</div><div class="sp-sum-val" id="sp-incr-rev">$148M</div><div class="sp-sum-delta flat" id="sp-incr-delta">Baseline</div></div>
+    <div><div class="sp-sum-lbl">Blended ROAS</div><div class="sp-sum-val" id="sp-roas">3.7×</div><div class="sp-sum-delta flat" id="sp-roas-delta">Baseline</div></div>
+    <div><div class="sp-sum-lbl">Blended ROI</div><div class="sp-sum-val" id="sp-roi">2.7×</div><div class="sp-sum-delta flat" id="sp-roi-delta">Baseline</div></div>
+  </div>
+
+  <div class="sp-grid" id="sp-channels"></div>
+
+  <div class="module" style="margin-top:18px;">
+    <div class="mod-header"><div><div class="mod-title">Scenario vs. Baseline · Revenue by Channel</div><div class="mod-sub">Projected vs. 2025 actuals at current slider settings</div></div>
+    <button onclick="resetScenario()" style="font-size:12px;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit;">Reset to Baseline</button>
+    </div>
+    <svg id="sp-compare-chart" width="100%" viewBox="0 0 1100 260"></svg>
+  </div>
+
+</div>
+
+</main>
+<div id="tt"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════
+const CHANNELS  = ['Brand Search','Non-Brand Search','Meta','YouTube','Linear TV','TikTok','Display'];
+const CH_COLOR  = ['#1d4ed8','#60a5fa','#8b5cf6','#ef4444','#f59e0b','#10b981','#06b6d4'];
+const CH_SHORT  = ['Brand Search','Non-Brand Search','Meta','YouTube','Linear TV','TikTok','Display'];
+// Waterfall labels with line breaks for narrow bars
+const CH_WF_LABELS = ['Brand\nSearch','Non-Brand\nSearch','Meta','YouTube','Linear\nTV','TikTok','Display'];
+const BASE_COLOR = '#e2e8f0';
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Annual configs: base revenue $M, incremental $M, spend by channel $M
+// Channels: Brand Search · Non-Brand Search · Meta · YouTube · Linear TV · TikTok · Display
+const ANNUAL_BASE  = [132, 185, 148];
+// Annual channel incremental revenue $M
+// 2023: middle contribution year — Linear TV + Display hardest
+// 2024: worst year for media efficiency — all channels underperformed
+// 2025: best year — Social (Meta, TikTok) + CTV (YouTube) drove outsized contribution
+const ANNUAL_CH_REV = [
+  [18, 24, 22, 16, 22, 10, 18],  // 2023 → 130 incr
+  [14, 16, 20, 10, 11,  7,  5],  // 2024 →  83 incr (worst)
+  [14, 28, 36, 30,  8, 24,  8],  // 2025 → 148 incr (best)
+];
+// Annual channel spend $M (each year sums to 40)
+const ANNUAL_CH_SPEND = [
+  [5.5, 3.3, 8.0, 5.8, 8.5, 5.2, 3.7],  // 2023
+  [5.2, 3.0, 8.5, 6.5, 7.5, 5.5, 3.8],  // 2024
+  [5.0, 3.5, 9.5, 8.0, 5.5, 7.0, 1.5],  // 2025
+];
+
+// Seasonal indices (sum = 12 each)
+const REV_SEASONAL   = [0.82,0.84,0.92,0.96,1.05,1.12,1.14,1.10,0.98,1.00,1.06,1.01];
+const SPEND_SEASONAL = [0.78,0.82,0.88,0.95,1.05,1.10,1.08,1.08,0.94,1.00,1.18,1.14];
+
+// Diminishing returns: rev(s) = k * s^α (per-channel exponent)
+// Brand Search: low α (demand capture channel; halo-inflated attribution, not true incrementality)
+// Non-Brand Search / Social / CTV: higher α (genuine incremental response)
+const DR_ALPHA = [0.42, 0.72, 0.72, 0.70, 0.55, 0.75, 0.60];
+const DR_K = ANNUAL_CH_REV[2].map((r, i) => r / Math.pow(ANNUAL_CH_SPEND[2][i], DR_ALPHA[i]));
+
+// ════════════════════════════════════════════
+//  GENERATE MONTHLY DATA
+// ════════════════════════════════════════════
+const MONTHLY = [];
+for (let yi = 0; yi < 3; yi++) {
+  for (let mi = 0; mi < 12; mi++) {
+    const sf = REV_SEASONAL[mi];
+    const ss = SPEND_SEASONAL[mi];
+    const base = (ANNUAL_BASE[yi] / 12) * sf;
+    const ch_rev   = ANNUAL_CH_REV[yi].map(r => (r / 12) * sf);
+    const ch_spend = ANNUAL_CH_SPEND[yi].map(s => (s / 12) * ss);
+    const total_rev = base + ch_rev.reduce((a,b) => a+b, 0);
+    MONTHLY.push({
+      label: MONTH_LABELS[mi] + ' ' + (2023+yi),
+      short: MONTH_LABELS[mi],
+      year: 2023+yi, yi, mi,
+      base, ch_rev, ch_spend, total_rev,
+      transactions: total_rev / 16,        // $M / $16 avg check = M txns
+      visits: (total_rev / 16) * 1.05,
+    });
+  }
+}
+
+// ════════════════════════════════════════════
+//  TOOLTIP
+// ════════════════════════════════════════════
+const tt = document.getElementById('tt');
+let ttOn = false;
+function showTT(e, html) {
+  tt.innerHTML = html; tt.style.display = 'block'; ttOn = true; moveTT(e);
+}
+function moveTT(e) {
+  if (!ttOn) return;
+  tt.style.left = (e.clientX+16)+'px'; tt.style.top = (e.clientY-10)+'px';
+}
+function hideTT() { tt.style.display='none'; ttOn=false; }
+
+// ════════════════════════════════════════════
+//  SVG HELPERS
+// ════════════════════════════════════════════
+const NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+  return e;
+}
+function fmt(v, dec=1) { return v.toFixed(dec); }
+function fmtM(v) { return '$'+v.toFixed(1)+'M'; }
+
+// ════════════════════════════════════════════
+//  KPI STRIP
+// ════════════════════════════════════════════
+(function renderKPIs() {
+  const rev25 = MONTHLY.filter(m=>m.yi===2).reduce((s,m)=>s+m.total_rev,0);
+  const rev24 = MONTHLY.filter(m=>m.yi===1).reduce((s,m)=>s+m.total_rev,0);
+  const v25 = MONTHLY.filter(m=>m.yi===2).reduce((s,m)=>s+m.visits,0);
+  const v24 = MONTHLY.filter(m=>m.yi===1).reduce((s,m)=>s+m.visits,0);
+  const t25 = MONTHLY.filter(m=>m.yi===2).reduce((s,m)=>s+m.transactions,0);
+  const spend25 = ANNUAL_CH_SPEND[2].reduce((a,b)=>a+b,0);
+  const incr25  = ANNUAL_CH_REV[2].reduce((a,b)=>a+b,0);
+  const roas25  = incr25 / spend25;
+  const revDelta = ((rev25-rev24)/rev24*100).toFixed(1);
+  const kpis = [
+    { val: fmtM(rev25), lbl: 'Total US Revenue · 2025', delta: '+'+revDelta+'% vs. 2024', neg: false },
+    { val: t25.toFixed(1)+'M', lbl: 'Annual Transactions · 2025', delta: '+'+((t25-(rev24/16))/( rev24/16)*100).toFixed(1)+'% vs. 2024', neg: false },
+    { val: v25.toFixed(1)+'M', lbl: 'Annual Visits · 2025', delta: '+'+((v25-(v24))/v24*100).toFixed(1)+'% vs. 2024', neg: false },
+    { val: '$40M', lbl: 'Annual Media Spend', delta: 'Stable 2023–2025', neg: false },
+    { val: roas25.toFixed(1)+'×', lbl: 'Blended Incremental ROAS', delta: 'Incremental rev ÷ spend', neg: false },
+  ];
+  document.getElementById('kpi-strip').innerHTML = kpis.map(k=>`
+    <div class="kpi">
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-delta${k.neg?' neg':''}">${k.delta}</div>
+    </div>`).join('');
+
+  // Set inline values used elsewhere
+  document.getElementById('rev-cagr').textContent = '+6.3%';
+  // 2024→2025: total rev 268→296 = +10.4%
+  document.getElementById('visits-delta').textContent = '+10.4%';
+  document.getElementById('txn-delta').textContent = '+10.4%';
+})();
+
+// ════════════════════════════════════════════
+//  OVERVIEW: STACKED AREA CHART
+// ════════════════════════════════════════════
+(function renderOverview() {
+  const svg = document.getElementById('overview-chart');
+  const vW=1140, vH=280, pad={l:46,r:16,t:10,b:44};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const n=MONTHLY.length;
+  const maxY = 30; // $M
+  const xS = i => pad.l + (i/(n-1))*cW;
+  const yS = v => pad.t + cH - (v/maxY)*cH;
+
+  let html='';
+  // Y grid
+  [10,15,20,25,30].forEach(y => {
+    const cy=yS(y);
+    html+=`<line x1="${pad.l}" y1="${cy}" x2="${pad.l+cW}" y2="${cy}" stroke="#f1f5f9" stroke-width="1"/>`;
+    html+=`<text x="${pad.l-6}" y="${cy+4}" fill="#94a3b8" font-size="10" text-anchor="end">$${y}M</text>`;
+  });
+
+  // X labels (every 6 months)
+  MONTHLY.forEach((m,i)=>{
+    if(m.mi===0||m.mi===6){
+      html+=`<text x="${xS(i)}" y="${pad.t+cH+16}" fill="#94a3b8" font-size="10" text-anchor="middle">${m.short} ${m.year}</text>`;
+    }
+  });
+
+  // Stacked areas: build layers bottom-up
+  const layers = ['base',...CHANNELS.map((_,i)=>i)];
+  const colors = [BASE_COLOR,...CH_COLOR];
+
+  // Compute stacks
+  const stacks = MONTHLY.map(m => {
+    const s=[0, m.base];
+    m.ch_rev.forEach((r,i)=>s.push(s[i+1]+r));
+    return s;
+  });
+
+  // Draw filled areas from top-layer down for correct overlap
+  for(let li=7; li>=0; li--){
+    const topPts = MONTHLY.map((_,i)=>`${xS(i)},${yS(stacks[i][li+1])}`).join(' ');
+    const botPts = MONTHLY.map((_,i)=>`${xS(i)},${yS(stacks[i][li])}`).reverse().map(p=>p).join(' ');
+    html+=`<polygon points="${topPts} ${botPts}" fill="${colors[li]}" opacity="${li===0?1:0.82}"/>`;
+  }
+
+  // Year dividers
+  [12,24].forEach(i=>{
+    const cx=xS(i);
+    html+=`<line x1="${cx}" y1="${pad.t}" x2="${cx}" y2="${pad.t+cH}" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    html+=`<text x="${cx+6}" y="${pad.t+12}" fill="#94a3b8" font-size="10" font-weight="700">${2023+i/12}</text>`;
+  });
+
+  // Hover rects
+  MONTHLY.forEach((m,i)=>{
+    const rect = svgEl('rect',{x:xS(i)-12,y:pad.t,width:24,height:cH,fill:'transparent',cursor:'pointer'});
+    const tip = `<strong>${m.label}</strong>`+
+      `<div class="tr"><span>Total Rev</span><span class="tv">${fmtM(m.total_rev)}</span></div>`+
+      `<div class="tr"><span>Base</span><span class="tv">${fmtM(m.base)}</span></div>`+
+      CHANNELS.map((c,ci)=>`<div class="tr"><span>${c}</span><span class="tv">${fmtM(m.ch_rev[ci])}</span></div>`).join('');
+    rect.addEventListener('mouseenter',e=>showTT(e,tip));
+    rect.addEventListener('mousemove',moveTT);
+    rect.addEventListener('mouseleave',hideTT);
+    svg.appendChild(svgEl('g',{}));
+    html+=''; // placeholder — append rects after setting innerHTML
+    svg.__rects = svg.__rects||[];
+    svg.__rects.push({el:rect});
+  });
+
+  svg.innerHTML=html;
+  // Re-append interactive rects
+  MONTHLY.forEach((m,i)=>{
+    const rect = svgEl('rect',{x:xS(i)-12,y:pad.t,width:24,height:cH,fill:'transparent',cursor:'pointer'});
+    const tip = `<strong>${m.label}</strong>`+
+      `<div class="tr"><span>Total Rev</span><span class="tv">${fmtM(m.total_rev)}</span></div>`+
+      `<div class="tr"><span>Base</span><span class="tv">${fmtM(m.base)}</span></div>`+
+      CHANNELS.map((c,ci)=>`<div class="tr"><span>${c}</span><span class="tv">${fmtM(m.ch_rev[ci])}</span></div>`).join('');
+    rect.addEventListener('mouseenter',e=>showTT(e,tip));
+    rect.addEventListener('mousemove',moveTT);
+    rect.addEventListener('mouseleave',hideTT);
+    svg.appendChild(rect);
+  });
+
+  // Legend
+  const leg = document.getElementById('overview-legend');
+  leg.innerHTML = [['Base Revenue',BASE_COLOR],...CHANNELS.map((c,i)=>[c,CH_COLOR[i]])].map(([c,col])=>
+    `<span class="leg-item"><span class="leg-dot" style="background:${col}"></span>${c}</span>`
+  ).join('');
+})();
+
+// ════════════════════════════════════════════
+//  OVERVIEW: VISITS & TRANSACTIONS LINE CHARTS
+// ════════════════════════════════════════════
+function renderSimpleLine(svgId, dataFn, labelFn, color) {
+  const svg = document.getElementById(svgId);
+  const vW=520, vH=200, pad={l:44,r:12,t:10,b:36};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const vals = MONTHLY.map(dataFn);
+  const minV = Math.min(...vals)*0.95, maxV = Math.max(...vals)*1.05;
+  const n = vals.length;
+  const xS = i => pad.l + (i/(n-1))*cW;
+  const yS = v => pad.t + cH - ((v-minV)/(maxV-minV))*cH;
+
+  let html='';
+  // Compute ~4 evenly spaced gridlines from actual data range
+  const gridRange = maxV - minV;
+  const rawStep = gridRange / 4;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const gridStep = Math.ceil(rawStep / magnitude) * magnitude;
+  const gridStart = Math.ceil(minV / gridStep) * gridStep;
+  for(let gv=gridStart; gv<=maxV; gv=Math.round((gv+gridStep)*1000)/1000){
+    const cy=yS(gv);
+    html+=`<line x1="${pad.l}" y1="${cy}" x2="${pad.l+cW}" y2="${cy}" stroke="#f1f5f9" stroke-width="1"/>`;
+    html+=`<text x="${pad.l-6}" y="${cy+4}" fill="#94a3b8" font-size="9.5" text-anchor="end">${gv.toFixed(2)}</text>`;
+  }
+  MONTHLY.forEach((m,i)=>{
+    if(m.mi===0||m.mi===6)
+      html+=`<text x="${xS(i)}" y="${pad.t+cH+14}" fill="#94a3b8" font-size="9.5" text-anchor="middle">${m.short} ${m.year}</text>`;
+  });
+
+  // Area fill
+  const pts = vals.map((v,i)=>`${xS(i)},${yS(v)}`).join(' ');
+  const areaPts = pts + ` ${xS(n-1)},${pad.t+cH} ${xS(0)},${pad.t+cH}`;
+  html+=`<polygon points="${areaPts}" fill="${color}" opacity="0.1"/>`;
+  html+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg.innerHTML=html;
+
+  MONTHLY.forEach((m,i)=>{
+    const rect=svgEl('rect',{x:xS(i)-10,y:pad.t,width:20,height:cH,fill:'transparent',cursor:'pointer'});
+    const tip=`<strong>${m.label}</strong><div class="tr"><span>${labelFn}</span><span class="tv">${vals[i].toFixed(2)}M</span></div>`;
+    rect.addEventListener('mouseenter',e=>showTT(e,tip));
+    rect.addEventListener('mousemove',moveTT);
+    rect.addEventListener('mouseleave',hideTT);
+    svg.appendChild(rect);
+  });
+}
+renderSimpleLine('visits-chart', m=>m.visits, 'Visits', '#3b82f6');
+renderSimpleLine('txn-chart', m=>m.transactions, 'Transactions', '#8b5cf6');
+
+// ════════════════════════════════════════════
+//  OVERVIEW: SPEND MIX TABLE
+// ════════════════════════════════════════════
+(function(){
+  const cont = document.getElementById('spend-mix-table');
+  let html=`<table class="data-tbl"><thead><tr><th>Channel</th>`;
+  ['2023','2024','2025'].forEach(y=>html+=`<th>${y} Spend</th><th>${y} Mix</th>`);
+  html+=`<th>Trend</th></tr></thead><tbody>`;
+  CHANNELS.forEach((ch,ci)=>{
+    const totals = ANNUAL_CH_SPEND.map(yr=>yr.reduce((a,b)=>a+b,0));
+    html+=`<tr><td><span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:${CH_COLOR[ci]};display:inline-block;"></span><strong>${ch}</strong></span></td>`;
+    ANNUAL_CH_SPEND.forEach((yr,yi)=>{
+      const s=yr[ci], mix=(s/totals[yi]*100).toFixed(0);
+      html+=`<td class="num">$${s.toFixed(1)}M</td><td>${mix}%</td>`;
+    });
+    const delta = ANNUAL_CH_SPEND[2][ci] - ANNUAL_CH_SPEND[0][ci];
+    const cls = delta>0?'trend-up':delta<0?'trend-dn':'';
+    html+=`<td class="${cls} num">${delta>=0?'+':''}${delta.toFixed(1)}M</td></tr>`;
+  });
+  html+=`</tbody></table>`;
+  cont.innerHTML=html;
+})();
+
+// ════════════════════════════════════════════
+//  DECOMP: MONTHLY STACKED BAR CHART
+// ════════════════════════════════════════════
+(function renderDecomp(){
+  const svg=document.getElementById('decomp-chart');
+  const vW=1140,vH=300,pad={l:46,r:16,t:10,b:44};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const n=MONTHLY.length;
+  const bw=cW/n*0.72, gap=cW/n*0.28;
+  const maxY=30;
+  const xS=i=>pad.l+(i+0.5)*(cW/n)-bw/2;
+  const yS=v=>pad.t+cH-(v/maxY)*cH;
+
+  let html='';
+  [10,15,20,25,30].forEach(y=>{
+    const cy=yS(y);
+    html+=`<line x1="${pad.l}" y1="${cy}" x2="${pad.l+cW}" y2="${cy}" stroke="#f1f5f9" stroke-width="1"/>`;
+    html+=`<text x="${pad.l-6}" y="${cy+4}" fill="#94a3b8" font-size="10" text-anchor="end">$${y}M</text>`;
+  });
+  MONTHLY.forEach((m,i)=>{
+    if(m.mi===0||m.mi===6)
+      html+=`<text x="${xS(i)+bw/2}" y="${pad.t+cH+15}" fill="#94a3b8" font-size="9.5" text-anchor="middle">${m.short} ${m.year}</text>`;
+  });
+
+  const colors=[BASE_COLOR,...CH_COLOR];
+  MONTHLY.forEach((m,i)=>{
+    const vals=[m.base,...m.ch_rev];
+    let cum=0;
+    vals.forEach((v,li)=>{
+      const barH=(v/maxY)*cH;
+      const barY=yS(cum+v);
+      html+=`<rect x="${xS(i)}" y="${barY}" width="${bw}" height="${barH}" fill="${colors[li]}" opacity="${li===0?1:0.85}" rx="${li===vals.length-1?2:0}"/>`;
+      cum+=v;
+    });
+  });
+
+  [12,24].forEach(i=>{
+    const cx=pad.l+(i+0.5)*(cW/n);
+    html+=`<line x1="${cx}" y1="${pad.t}" x2="${cx}" y2="${pad.t+cH}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,3"/>`;
+  });
+
+  svg.innerHTML=html;
+  MONTHLY.forEach((m,i)=>{
+    const rect=svgEl('rect',{x:xS(i),y:pad.t,width:bw,height:cH,fill:'transparent',cursor:'pointer'});
+    const tip=`<strong>${m.label}</strong>`+
+      `<div class="tr"><span>Total</span><span class="tv">${fmtM(m.total_rev)}</span></div>`+
+      `<div class="tr"><span>Base</span><span class="tv">${fmtM(m.base)}</span></div>`+
+      CHANNELS.map((c,ci)=>`<div class="tr"><span>${c}</span><span class="tv">${fmtM(m.ch_rev[ci])}</span></div>`).join('');
+    rect.addEventListener('mouseenter',e=>showTT(e,tip));
+    rect.addEventListener('mousemove',moveTT);
+    rect.addEventListener('mouseleave',hideTT);
+    svg.appendChild(rect);
+  });
+
+  const leg=document.getElementById('decomp-legend');
+  leg.innerHTML=[['Base Revenue',BASE_COLOR],...CHANNELS.map((c,i)=>[c,CH_COLOR[i]])].map(([c,col])=>
+    `<span class="leg-item"><span class="leg-dot" style="background:${col}"></span>${c}</span>`
+  ).join('');
+})();
+
+// ════════════════════════════════════════════
+//  DECOMP: WATERFALL
+// ════════════════════════════════════════════
+(function renderWaterfall(){
+  const svg=document.getElementById('waterfall-chart');
+  const vW=1100,vH=320,pad={l:16,r:16,t:16,b:60};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const base25=ANNUAL_BASE[2];
+  const ch_rev25=ANNUAL_CH_REV[2];
+  const total25=base25+ch_rev25.reduce((a,b)=>a+b,0);
+
+  const bars=[
+    {label:'Base\nRevenue',val:base25,start:0,color:'#e2e8f0',isTotal:false},
+    ...CH_WF_LABELS.map((lbl,i)=>({label:lbl,val:ch_rev25[i],start:null,color:CH_COLOR[i],isTotal:false})),
+    {label:'Total\nRevenue',val:total25,start:0,color:'#0f172a',isTotal:true},
+  ];
+
+  // Compute starts
+  let cum=0;
+  bars.forEach(b=>{
+    if(!b.isTotal){b.start=cum; cum+=b.val;}
+  });
+
+  const maxY=total25*1.08;
+  const n=bars.length;
+  const bw=cW/n*0.58;
+  const xS=i=>pad.l+(i+0.5)*(cW/n)-bw/2;
+  const yS=v=>pad.t+cH-(v/maxY)*cH;
+
+  let html='';
+  [50,100,150,200,250,300].forEach(y=>{
+    if(y<=maxY){
+      const cy=yS(y);
+      html+=`<line x1="${pad.l}" y1="${cy}" x2="${pad.l+cW}" y2="${cy}" stroke="#f1f5f9" stroke-width="1"/>`;
+    }
+  });
+
+  bars.forEach((b,i)=>{
+    const barH=(b.val/maxY)*cH;
+    const barY=yS(b.start+b.val);
+    html+=`<rect x="${xS(i)}" y="${barY}" width="${bw}" height="${barH}" fill="${b.color}" rx="3"/>`;
+    // Connector line to next bar
+    if(!b.isTotal && i<bars.length-2){
+      const nextBarX=xS(i+1);
+      const topY=yS(b.start+b.val);
+      html+=`<line x1="${xS(i)+bw}" y1="${topY}" x2="${nextBarX}" y2="${topY}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,2"/>`;
+    }
+    // Value label
+    html+=`<text x="${xS(i)+bw/2}" y="${barY-5}" fill="${b.isTotal?'#0f172a':b.color}" font-size="11.5" font-weight="700" text-anchor="middle">$${b.val}M</text>`;
+    // X label (split by \n)
+    const lines=b.label.split('\n');
+    lines.forEach((l,li)=>{
+      html+=`<text x="${xS(i)+bw/2}" y="${pad.t+cH+18+li*14}" fill="#64748b" font-size="11" text-anchor="middle">${l}</text>`;
+    });
+  });
+
+  svg.innerHTML=html;
+})();
+
+// ════════════════════════════════════════════
+//  DECOMP: ANNUAL TABLE
+// ════════════════════════════════════════════
+(function(){
+  const cont=document.getElementById('decomp-table');
+  let html=`<table class="data-tbl"><thead><tr><th>Channel</th><th>2023 Rev</th><th>2024 Rev</th><th>2025 Rev</th><th>2023 Share</th><th>2025 Share</th><th>3Y Growth</th></tr></thead><tbody>`;
+  const totals=ANNUAL_CH_REV.map(yr=>yr.reduce((a,b)=>a+b,0));
+  html+=`<tr><td><strong>Base Revenue</strong></td>${ANNUAL_BASE.map(b=>`<td class="num">$${b}M</td>`).join('')}<td>${(ANNUAL_BASE[0]/262*100).toFixed(0)}%</td><td>${(ANNUAL_BASE[2]/296*100).toFixed(0)}%</td><td class="trend-up num">+$${ANNUAL_BASE[2]-ANNUAL_BASE[0]}M</td></tr>`;
+  CHANNELS.forEach((ch,ci)=>{
+    const revs=ANNUAL_CH_REV.map(yr=>yr[ci]);
+    const sh0=(revs[0]/totals[0]*100).toFixed(0);
+    const sh2=(revs[2]/totals[2]*100).toFixed(0);
+    const growth=revs[2]-revs[0];
+    html+=`<tr><td><span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:${CH_COLOR[ci]};display:inline-block;"></span><strong>${ch}</strong></span></td>`;
+    revs.forEach(r=>html+=`<td class="num">$${r}M</td>`);
+    html+=`<td>${sh0}%</td><td>${sh2}%</td><td class="${growth>=0?'trend-up':'trend-dn'} num">${growth>=0?'+':''}$${growth}M</td></tr>`;
+  });
+  const total_revs=[262,268,296];
+  html+=`<tr style="background:#faf9f7;"><td><strong>Total Revenue</strong></td>${total_revs.map(r=>`<td class="num"><strong>$${r}M</strong></td>`).join('')}<td>—</td><td>—</td><td class="trend-up num"><strong>+$${total_revs[2]-total_revs[0]}M</strong></td></tr>`;
+  html+=`</tbody></table>`;
+  cont.innerHTML=html;
+})();
+
+// ════════════════════════════════════════════
+//  ROI: HORIZONTAL BAR CHARTS
+// ════════════════════════════════════════════
+function renderHorizBars(svgId, vals, labels, colors, xLabel, xMax, refLine) {
+  const svg=document.getElementById(svgId);
+  const vW=500,vH=320,pad={l:110,r:60,t:16,b:44};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const n=vals.length;
+  const bh=cH/n*0.55;
+  const yS=i=>pad.t+(i+0.5)*(cH/n)-bh/2;
+
+  let html='';
+  // Grid — dynamic step based on xMax
+  const step = xMax <= 6 ? 1 : xMax <= 10 ? 2 : 5;
+  for(let x=step; x<=xMax; x+=step){
+    const cx=pad.l+(x/xMax)*cW;
+    html+=`<line x1="${cx}" y1="${pad.t}" x2="${cx}" y2="${pad.t+cH}" stroke="#f1f5f9" stroke-width="1"/>`;
+    html+=`<text x="${cx}" y="${pad.t+cH+14}" fill="#94a3b8" font-size="10" text-anchor="middle">${x}×</text>`;
+  }
+  // Reference line
+  if(refLine){
+    const rx=pad.l+(refLine/xMax)*cW;
+    html+=`<line x1="${rx}" y1="${pad.t}" x2="${rx}" y2="${pad.t+cH}" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3"/>`;
+    html+=`<text x="${rx+3}" y="${pad.t+10}" fill="#64748b" font-size="9.5" font-style="italic">Avg ${refLine.toFixed(1)}×</text>`;
+  }
+
+  vals.forEach((v,i)=>{
+    const bw=(v/xMax)*cW;
+    html+=`<rect x="${pad.l}" y="${yS(i)}" width="${bw}" height="${bh}" fill="${colors[i]}" rx="3"/>`;
+    html+=`<text x="${pad.l-8}" y="${yS(i)+bh/2+4}" fill="#334155" font-size="12" font-weight="600" text-anchor="end">${labels[i]}</text>`;
+    html+=`<text x="${pad.l+bw+6}" y="${yS(i)+bh/2+4}" fill="${colors[i]}" font-size="12" font-weight="800">${v.toFixed(1)}×</text>`;
+  });
+
+  html+=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+cH}" stroke="#e2e8f0" stroke-width="1.5"/>`;
+  html+=`<line x1="${pad.l}" y1="${pad.t+cH}" x2="${pad.l+cW}" y2="${pad.t+cH}" stroke="#e2e8f0" stroke-width="1.5"/>`;
+  svg.innerHTML=html;
+}
+
+const ROAS_25 = ANNUAL_CH_REV[2].map((r,i)=>r/ANNUAL_CH_SPEND[2][i]);
+const ROI_25  = ANNUAL_CH_REV[2].map((r,i)=>(r-ANNUAL_CH_SPEND[2][i])/ANNUAL_CH_SPEND[2][i]);
+const blendedROAS = ANNUAL_CH_REV[2].reduce((a,b)=>a+b,0)/ANNUAL_CH_SPEND[2].reduce((a,b)=>a+b,0);
+const blendedROI  = (ANNUAL_CH_REV[2].reduce((a,b)=>a+b,0)-ANNUAL_CH_SPEND[2].reduce((a,b)=>a+b,0))/ANNUAL_CH_SPEND[2].reduce((a,b)=>a+b,0);
+
+renderHorizBars('roas-chart', ROAS_25, CH_SHORT, CH_COLOR, 'ROAS', 10, blendedROAS);
+renderHorizBars('roi-chart',  ROI_25,  CH_SHORT, CH_COLOR, 'ROI',   8, blendedROI);
+
+// ════════════════════════════════════════════
+//  ROI: FULL TABLE
+// ════════════════════════════════════════════
+(function(){
+  const cont=document.getElementById('roi-table');
+  let html=`<table class="data-tbl"><thead><tr><th>Channel</th><th>2025 Spend</th><th>2025 Rev</th><th>ROAS</th><th>ROI</th><th>vs. 2023 ROAS</th><th>vs. 2023 ROI</th></tr></thead><tbody>`;
+  const ROAS_23=ANNUAL_CH_REV[0].map((r,i)=>r/ANNUAL_CH_SPEND[0][i]);
+  const ROI_23=ANNUAL_CH_REV[0].map((r,i)=>(r-ANNUAL_CH_SPEND[0][i])/ANNUAL_CH_SPEND[0][i]);
+  CHANNELS.forEach((ch,i)=>{
+    const roasDelta=ROAS_25[i]-ROAS_23[i];
+    const roiDelta=ROI_25[i]-ROI_23[i];
+    const roasPill=ROAS_25[i]>=blendedROAS
+      ?`<span class="pill" style="background:#f0fdf4;color:#166534;">${ROAS_25[i].toFixed(1)}×</span>`
+      :`<span class="pill" style="background:#fef2f2;color:#991b1b;">${ROAS_25[i].toFixed(1)}×</span>`;
+    html+=`<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:${CH_COLOR[i]};display:inline-block;"></span><strong>${ch}</strong></span></td>
+      <td class="num">$${ANNUAL_CH_SPEND[2][i].toFixed(1)}M</td>
+      <td class="num">$${ANNUAL_CH_REV[2][i]}M</td>
+      <td>${roasPill}</td>
+      <td class="num">${ROI_25[i].toFixed(1)}×</td>
+      <td class="${roasDelta>=0?'trend-up':'trend-dn'} num">${roasDelta>=0?'+':''}${roasDelta.toFixed(2)}×</td>
+      <td class="${roiDelta>=0?'trend-up':'trend-dn'} num">${roiDelta>=0?'+':''}${roiDelta.toFixed(2)}×</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  cont.innerHTML=html;
+})();
+
+// ════════════════════════════════════════════
+//  DIMINISHING RETURNS
+// ════════════════════════════════════════════
+let drActiveChannel = null; // null = all visible
+
+function renderDR() {
+  const svg = document.getElementById('dr-chart');
+  const vW=1100,vH=400,pad={l:52,r:24,t:16,b:52};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const xMax=15, yMax=90;
+  const xS=v=>pad.l+(v/xMax)*cW;
+  const yS=v=>pad.t+cH-(v/yMax)*cH;
+
+  let html='';
+  // Grid
+  [0,15,30,45,60,75,90].forEach(y=>{
+    const cy=yS(y);
+    html+=`<line x1="${pad.l}" y1="${cy}" x2="${pad.l+cW}" y2="${cy}" stroke="#f1f5f9" stroke-width="1"/>`;
+    html+=`<text x="${pad.l-6}" y="${cy+4}" fill="#94a3b8" font-size="10" text-anchor="end">$${y}M</text>`;
+  });
+  [0,5,10,15].forEach(x=>{
+    const cx=xS(x);
+    html+=`<line x1="${cx}" y1="${pad.t}" x2="${cx}" y2="${pad.t+cH}" stroke="#f1f5f9" stroke-width="1"/>`;
+    html+=`<text x="${cx}" y="${pad.t+cH+16}" fill="#94a3b8" font-size="10" text-anchor="middle">$${x}M</text>`;
+  });
+  html+=`<text x="${pad.l+cW/2}" y="${pad.t+cH+36}" fill="#94a3b8" font-size="11" text-anchor="middle">Annual Spend ($M)</text>`;
+  html+=`<text x="${pad.l-36}" y="${pad.t+cH/2}" fill="#94a3b8" font-size="11" text-anchor="middle" transform="rotate(-90,${pad.l-36},${pad.t+cH/2})">Incremental Revenue ($M)</text>`;
+
+  // Curves
+  const nPts=60;
+  CHANNELS.forEach((ch,ci)=>{
+    const k=DR_K[ci];
+    const curSpend=ANNUAL_CH_SPEND[2][ci];
+    const isDimmed = drActiveChannel !== null && drActiveChannel !== ci;
+    const alpha = isDimmed ? 0.12 : 0.9;
+    const sw = isDimmed ? 1.5 : 2.5;
+
+    const pts=[];
+    for(let pi=0;pi<=nPts;pi++){
+      const s=(pi/nPts)*xMax;
+      const r=k*Math.pow(s,DR_ALPHA[ci]);
+      pts.push(`${xS(s)},${yS(Math.min(r,yMax))}`);
+    }
+    html+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${CH_COLOR[ci]}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" opacity="${alpha}"/>`;
+
+    // Current spend dot
+    const curRev = k*Math.pow(curSpend,DR_ALPHA[ci]);
+    html+=`<circle cx="${xS(curSpend)}" cy="${yS(curRev)}" r="${isDimmed?3:5}" fill="${CH_COLOR[ci]}" opacity="${alpha}" stroke="#fff" stroke-width="2"/>`;
+    // Only show text labels when a channel is isolated to avoid overlap
+    if(drActiveChannel !== null && !isDimmed){
+      html+=`<text x="${xS(curSpend)+8}" y="${yS(curRev)-6}" fill="${CH_COLOR[ci]}" font-size="10.5" font-weight="700">${ch}</text>`;
+      html+=`<text x="${xS(curSpend)+8}" y="${yS(curRev)+6}" fill="#94a3b8" font-size="9.5">$${curSpend.toFixed(1)}M → $${curRev.toFixed(0)}M</text>`;
+    }
+  });
+
+  html+=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+cH}" stroke="#e2e8f0" stroke-width="1.5"/>`;
+  html+=`<line x1="${pad.l}" y1="${pad.t+cH}" x2="${pad.l+cW}" y2="${pad.t+cH}" stroke="#e2e8f0" stroke-width="1.5"/>`;
+  svg.innerHTML=html;
+
+  // Legend
+  const leg=document.getElementById('dr-legend');
+  leg.innerHTML=CHANNELS.map((c,ci)=>`
+    <span class="leg-item${drActiveChannel!==null&&drActiveChannel!==ci?' dimmed':''}" onclick="toggleDR(${ci})" style="cursor:pointer;">
+      <span class="leg-dot" style="background:${CH_COLOR[ci]}"></span>${c}
+      <span style="font-size:10px;color:${CH_COLOR[ci]};margin-left:2px;">(ROAS ${ROAS_25[ci].toFixed(1)}×)</span>
+    </span>`
+  ).join('');
+}
+
+function toggleDR(ci) {
+  drActiveChannel = drActiveChannel === ci ? null : ci;
+  renderDR();
+}
+renderDR();
+
+// ════════════════════════════════════════════
+//  DR: MARGINAL RETURN TABLE
+// ════════════════════════════════════════════
+(function(){
+  const cont=document.getElementById('marginal-table');
+  let html=`<table class="data-tbl"><thead><tr><th>Channel</th><th>Current Spend</th><th>Current Rev</th><th>Marginal Return (next $1M)</th><th>Saturation Level</th><th>Recommendation</th></tr></thead><tbody>`;
+  CHANNELS.forEach((ch,i)=>{
+    const k=DR_K[i], s=ANNUAL_CH_SPEND[2][i], alpha=DR_ALPHA[i];
+    // Marginal return: derivative of k*s^α = α*k*s^(α-1)
+    const marginal=alpha*k*Math.pow(s,alpha-1);
+    const satPct=Math.min(((1-marginal/ROAS_25[i])*100),95).toFixed(0);
+    const rec = marginal>4?'Increase spend':marginal>2?'Optimize mix':marginal>1?'Hold current':'Reduce spend';
+    const recColor = marginal>4?'#166534':marginal>2?'#92400e':marginal>1?'#1d4ed8':'#991b1b';
+    html+=`<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:${CH_COLOR[i]};display:inline-block;"></span><strong>${ch}</strong></span></td>
+      <td class="num">$${s.toFixed(1)}M</td>
+      <td class="num">$${ANNUAL_CH_REV[2][i]}M</td>
+      <td class="num">${marginal.toFixed(2)}×</td>
+      <td><span class="pill" style="background:${marginal>3?'#f0fdf4':marginal>1.5?'#fffbeb':'#fef2f2'};color:${marginal>3?'#166534':marginal>1.5?'#92400e':'#991b1b'};">${satPct}% saturated</span></td>
+      <td><strong style="color:${recColor}">${rec}</strong></td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  cont.innerHTML=html;
+})();
+
+// ════════════════════════════════════════════
+//  SCENARIO PLANNER
+// ════════════════════════════════════════════
+const SP_BASE   = ANNUAL_CH_SPEND[2].slice(); // 2025 actuals
+const SP_MAXES  = [12, 10, 22, 20, 14, 18, 8];
+const SP_STATE  = SP_BASE.slice(); // current slider values
+
+function drRev(ci, spend) {
+  if(spend<=0) return 0;
+  return DR_K[ci]*Math.pow(spend, DR_ALPHA[ci]);
+}
+const BASE_CH_REVS = SP_BASE.map((s,i)=>drRev(i,s));
+const BASE_REV_TOTAL = ANNUAL_BASE[2]; // $148M base
+
+function renderScenario() {
+  const totalSpend = SP_STATE.reduce((a,b)=>a+b,0);
+  const chRevs = SP_STATE.map((s,i)=>drRev(i,s));
+  const totalIncrRev = chRevs.reduce((a,b)=>a+b,0);
+  const totalRev = BASE_REV_TOTAL + totalIncrRev;
+  const roas = totalIncrRev/totalSpend;
+  const roi  = (totalIncrRev-totalSpend)/totalSpend;
+
+  const baseSpend=SP_BASE.reduce((a,b)=>a+b,0);
+  const baseIncrRev=BASE_CH_REVS.reduce((a,b)=>a+b,0);
+  const baseRev=BASE_REV_TOTAL+baseIncrRev;
+  const baseRoas=baseIncrRev/baseSpend;
+  const baseRoi=(baseIncrRev-baseSpend)/baseSpend;
+
+  const spDelta=totalSpend-baseSpend;
+  const revDelta=totalRev-baseRev;
+  const incrDelta=totalIncrRev-baseIncrRev;
+  const roasDelta=roas-baseRoas;
+  const roiDelta=roi-baseRoi;
+
+  function fmt$(v){return (v>=0?'+':'')+fmtM(v);}
+  function fmtPct(v){return (v>=0?'+':'')+v.toFixed(1)+'×';}
+  function cls(v){return v>0.01?'up':v<-0.01?'down':'flat';}
+
+  document.getElementById('sp-total-spend').textContent=fmtM(totalSpend);
+  document.getElementById('sp-spend-delta').textContent=spDelta===0?'Baseline':fmt$(spDelta);
+  document.getElementById('sp-spend-delta').className='sp-sum-delta '+cls(spDelta);
+  document.getElementById('sp-proj-rev').textContent=fmtM(totalRev);
+  document.getElementById('sp-rev-delta').textContent=revDelta===0?'Baseline':fmt$(revDelta);
+  document.getElementById('sp-rev-delta').className='sp-sum-delta '+cls(revDelta);
+  document.getElementById('sp-incr-rev').textContent=fmtM(totalIncrRev);
+  document.getElementById('sp-incr-delta').textContent=incrDelta===0?'Baseline':fmt$(incrDelta);
+  document.getElementById('sp-incr-delta').className='sp-sum-delta '+cls(incrDelta);
+  document.getElementById('sp-roas').textContent=roas.toFixed(1)+'×';
+  document.getElementById('sp-roas-delta').textContent=roasDelta===0?'Baseline':fmtPct(roasDelta);
+  document.getElementById('sp-roas-delta').className='sp-sum-delta '+cls(roasDelta);
+  document.getElementById('sp-roi').textContent=roi.toFixed(1)+'×';
+  document.getElementById('sp-roi-delta').textContent=roiDelta===0?'Baseline':fmtPct(roiDelta);
+  document.getElementById('sp-roi-delta').className='sp-sum-delta '+cls(roiDelta);
+
+  // Update each channel card
+  CHANNELS.forEach((ch,i)=>{
+    const s=SP_STATE[i], base=SP_BASE[i];
+    const rev=drRev(i,s), baseRevCh=BASE_CH_REVS[i];
+    const delta=s-base;
+    const revDeltaCh=rev-baseRevCh;
+    const el=document.getElementById(`sp-ch-${i}`);
+    if(!el) return;
+    el.querySelector('.sp-val').textContent='$'+s.toFixed(1)+'M';
+    const dtEl=el.querySelector('.sp-delta-tag');
+    dtEl.textContent=delta===0?'Baseline':(delta>0?'+':'')+delta.toFixed(1)+'M';
+    dtEl.style.color=delta>0?'#10b981':delta<0?'#C81026':'#64748b';
+    el.querySelector('.sp-ch-rev').innerHTML=`Proj. rev: <strong>$${rev.toFixed(0)}M</strong> <span style="color:${revDeltaCh>0?'#10b981':revDeltaCh<0?'#C81026':'#64748b'};font-weight:700;">${revDeltaCh>=0?'+':''}$${revDeltaCh.toFixed(0)}M vs. baseline</span>`;
+  });
+
+  renderSpCompare(chRevs);
+}
+
+function renderSpCompare(projChRevs) {
+  const svg=document.getElementById('sp-compare-chart');
+  const vW=1100,vH=260,pad={l:90,r:20,t:14,b:44};
+  const cW=vW-pad.l-pad.r, cH=vH-pad.t-pad.b;
+  const n=CHANNELS.length;
+  const grpW=cW/n, bw=grpW*0.32;
+  const maxY=Math.max(...BASE_CH_REVS,...projChRevs)*1.2;
+  const yS=v=>pad.t+cH-(v/maxY)*cH;
+
+  let html='';
+  [10,20,30,40,50].forEach(y=>{
+    if(y<=maxY){
+      const cy=yS(y);
+      html+=`<line x1="${pad.l}" y1="${cy}" x2="${pad.l+cW}" y2="${cy}" stroke="#f1f5f9" stroke-width="1"/>`;
+      html+=`<text x="${pad.l-6}" y="${cy+4}" fill="#94a3b8" font-size="10" text-anchor="end">$${y}M</text>`;
+    }
+  });
+
+  CHANNELS.forEach((ch,i)=>{
+    const cx=pad.l+(i+0.5)*grpW;
+    const baseH=(BASE_CH_REVS[i]/maxY)*cH;
+    const projH=(projChRevs[i]/maxY)*cH;
+    // Baseline bar (gray)
+    html+=`<rect x="${cx-bw-2}" y="${yS(BASE_CH_REVS[i])}" width="${bw}" height="${baseH}" fill="#e2e8f0" rx="2"/>`;
+    html+=`<text x="${cx-bw/2-2}" y="${yS(BASE_CH_REVS[i])-4}" fill="#94a3b8" font-size="10" text-anchor="middle">$${BASE_CH_REVS[i].toFixed(0)}M</text>`;
+    // Projected bar (channel color)
+    html+=`<rect x="${cx+2}" y="${yS(projChRevs[i])}" width="${bw}" height="${projH}" fill="${CH_COLOR[i]}" rx="2"/>`;
+    html+=`<text x="${cx+bw/2+2}" y="${yS(projChRevs[i])-4}" fill="${CH_COLOR[i]}" font-size="10" font-weight="700" text-anchor="middle">$${projChRevs[i].toFixed(0)}M</text>`;
+    html+=`<text x="${cx}" y="${pad.t+cH+16}" fill="#64748b" font-size="11" text-anchor="middle">${ch}</text>`;
+  });
+
+  html+=`<rect x="${pad.l+cW-130}" y="${pad.t}" width="10" height="10" rx="2" fill="#e2e8f0"/>`;
+  html+=`<text x="${pad.l+cW-116}" y="${pad.t+9}" fill="#64748b" font-size="10">Baseline</text>`;
+  html+=`<rect x="${pad.l+cW-68}" y="${pad.t}" width="10" height="10" rx="2" fill="#C81026"/>`;
+  html+=`<text x="${pad.l+cW-54}" y="${pad.t+9}" fill="#334155" font-size="10">Scenario</text>`;
+
+  svg.innerHTML=html;
+}
+
+// Build channel slider cards
+(function buildSliders(){
+  const cont=document.getElementById('sp-channels');
+  cont.innerHTML=CHANNELS.map((ch,i)=>`
+    <div class="sp-ch" id="sp-ch-${i}" style="border-top-color:${CH_COLOR[i]}">
+      <div class="sp-ch-hdr">
+        <div class="sp-ch-name"><span class="sp-ch-dot" style="background:${CH_COLOR[i]}"></span>${ch}</div>
+        <div style="font-size:10.5px;color:var(--muted);">2025 baseline: $${SP_BASE[i].toFixed(1)}M</div>
+      </div>
+      <div class="sp-amounts">
+        <div class="sp-val">$${SP_STATE[i].toFixed(1)}M</div>
+        <div class="sp-delta-tag" style="color:#64748b;">Baseline</div>
+      </div>
+      <input type="range" class="sp-slider" id="sp-slider-${i}"
+        min="0" max="${SP_MAXES[i]}" step="0.5" value="${SP_STATE[i]}"
+        style="accent-color:${CH_COLOR[i]};"
+        oninput="updateSlider(${i}, parseFloat(this.value))">
+      <div class="sp-slider-labels"><span>$0</span><span>$${SP_MAXES[i]/2}M</span><span>$${SP_MAXES[i]}M</span></div>
+      <div class="sp-ch-rev">Proj. rev: <strong>$${drRev(i,SP_STATE[i]).toFixed(0)}M</strong></div>
+    </div>`
+  ).join('');
+  renderScenario();
+})();
+
+function updateSlider(ci, val) {
+  SP_STATE[ci]=val;
+  renderScenario();
+}
+
+function resetScenario() {
+  SP_BASE.forEach((v,i)=>{
+    SP_STATE[i]=v;
+    const s=document.getElementById(`sp-slider-${i}`);
+    if(s) s.value=v;
+  });
+  renderScenario();
+}
+
+// ════════════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
