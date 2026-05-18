@@ -227,7 +227,7 @@ tbody tr.data-row:hover td{background:#fafafa;}
 <!-- METHODOLOGY -->
 <section id="method">
   <h2>Methodology</h2>
-  <div class="sec-intro">This study employed a needs-based segmentation methodology — the standard approach for consumer research — which clusters respondents based on what they want from a category, rather than who they are demographically.</div>
+  <div class="sec-intro">This study employed a needs-based segmentation methodology (the standard approach for consumer research), which clusters respondents based on what they want from a category rather than who they are demographically.</div>
   <div class="card" style="margin-bottom:20px;padding:0;overflow:hidden;">
     <div class="method-steps" id="method-steps"></div>
   </div>
@@ -295,7 +295,7 @@ tbody tr.data-row:hover td{background:#fafafa;}
 <!-- PRIORITIZATION MATRIX -->
 <section id="priority">
   <h2>Segment Prioritization</h2>
-  <div class="sec-intro">Segments plotted by estimated revenue potential (based on frequency × spend × NPS-weighted referral value) and ease of winning (based on competitive cross-usage, price sensitivity, and current brand affinity). Bubble size = segment share of population.</div>
+  <div class="sec-intro">This chart maps each segment by revenue potential and how winnable they are based on current brand affinity, competitive cross-usage, and price sensitivity. Bubble size reflects population share.</div>
   <div class="g2">
     <div class="card">
       <svg id="priority-chart" width="100%" viewBox="0 0 420 320" class="radar-svg"></svg>
@@ -321,7 +321,7 @@ tbody tr.data-row:hover td{background:#fafafa;}
 <!-- ACTIVATION PLAYBOOK -->
 <section id="activation">
   <h2>Activation Playbook</h2>
-  <div class="sec-intro">Recommended go-to-market approach per segment — channel mix, core message, and priority offer or mechanic to drive conversion and loyalty.</div>
+  <div class="sec-intro">Recommended go-to-market approach per segment: channel mix, core message, and priority offer or mechanic to drive conversion and loyalty.</div>
   <div id="activation-rows"></div>
 </section>
 
@@ -349,38 +349,38 @@ tbody tr.data-row:hover td{background:#fafafa;}
 const SEGS = [
   { id:'A', name:'Urban Enthusiast',   pct:19, n:190, color:'#3b82f6', emoji:'🏙️',
     tagline:'Quality-driven urban professional, loyal and frequent',
-    quote:'"Shake Shack is my reward for a long week — premium quality, no apologies. Worth every dollar."',
+    quote:'"Shake Shack is my reward for a long week. Premium quality, no apologies. Worth every dollar."',
     stats:[ ['38%','Visit weekly+'], ['$28','Avg spend'], ['72%','App user'], ['52%','NPS Promoter'] ],
     radar:[128, 68, 118, 88, 112],
-    diffs:['Highest visit frequency and per-visit spend of any segment','Among the highest for mobile app adoption (72%), second only to Lunch Regulars','Skews young professional (25–34), high income ($100K+), urban Northeast/West','Brand-loyal — lowest competitive cross-shopping with McDonald\'s','Driven by quality and experience signals, not price'],
+    diffs:['Highest visit frequency and per-visit spend of any segment','Among the highest for mobile app adoption (72%), second only to Lunch Regulars','Skews young professional (25–34), high income ($100K+), urban Northeast/West','Brand-loyal, with the lowest competitive cross-shopping with McDonald\'s','Driven by quality and experience signals, not price'],
     activation:{channel:'Instagram, TikTok, loyalty email',message:'"The original elevated burger." Lean into craft, ingredient provenance, and premium positioning.',offer:'Priority LTO access, loyalty tier rewards, early menu drops'} },
   { id:'B', name:'Occasional Treater', pct:23, n:230, color:'#f59e0b', emoji:'👨‍👩‍👧',
     tagline:'Family-occasion visitor, experience-focused, moderate loyalty',
-    quote:'"We go maybe twice a month — the kids love it and it feels like a real outing, not just fast food."',
+    quote:'"We go maybe twice a month. The kids love it and it feels like a real outing, not just fast food."',
     stats:[ ['12%','Visit weekly+'], ['$26','Avg spend'], ['44%','App user'], ['38%','NPS Promoter'] ],
     radar:[95, 95, 125, 92, 82],
-    diffs:['Largest segment at 23% of QSR population — high volume potential','Skews 35–44, families with children, suburban','Dine-in preference strongest of any segment — atmosphere matters','Occasion-driven: birthdays, treat nights, weekend outings','Second-highest Experience Seeking index (125), behind Brand Advocates (135)'],
+    diffs:['Largest segment at 23% of QSR population, high volume potential','Skews 35–44, families with children, suburban','Dine-in preference strongest of any segment, where atmosphere really matters','Occasion-driven: birthdays, treat nights, weekend outings','Second-highest Experience Seeking index (125), behind Brand Advocates (135)'],
     activation:{channel:'Facebook, Instagram, family lifestyle OOH, local radio',message:'"Make it a moment." Emphasize atmosphere, family-friendliness, and the shared experience.',offer:'Family bundle promotions, kids-eat-free nights, birthday reward in app'} },
   { id:'C', name:'Lunch Regular',      pct:21, n:210, color:'#10b981', emoji:'💼',
     tagline:'Convenience-driven office worker, app-reliant, consistent spender',
     quote:'"It\'s my go-to when I want something quick that doesn\'t feel like junk food. Close to the office, easy app."',
     stats:[ ['32%','Visit weekly+'], ['$22','Avg spend'], ['79%','App user'], ['48%','NPS Promoter'] ],
     radar:[103, 88, 72, 148, 88],
-    diffs:['Highest mobile app adoption at 79% — the mobile-first segment','Convenience Priority index of 148 — strongest driver by a wide margin','Weekday lunch occasions dominate; proximity to workplace is key','Moderate spend per visit but high frequency drives total value','Responds to speed guarantees, skip-the-line messaging, and loyalty punch incentives'],
+    diffs:['Highest mobile app adoption at 79%, making this the most mobile-first segment','Convenience Priority index of 148, the strongest driver by a wide margin','Weekday lunch occasions dominate; proximity to workplace is key','Moderate spend per visit but high frequency drives total value','Responds to speed guarantees, skip-the-line messaging, and loyalty punch incentives'],
     activation:{channel:'Push notifications, Google Maps/Search, LinkedIn, office catering partnerships',message:'"Skip the line. Earn the lunch." Emphasize speed, reliability, and mobile rewards.',offer:'Mobile order loyalty stamps, office catering pilot program, free item after X visits'} },
   { id:'D', name:'Value Skeptic',      pct:20, n:200, color:'#ef4444', emoji:'🤔',
     tagline:'Price-sensitive cross-shopper, infrequent visitor, conversion opportunity',
     quote:'"I like the food, but $18 for a combo? I can\'t justify that every week. McDonald\'s is right there."',
     stats:[ ['16%','Visit weekly+'], ['$18','Avg spend'], ['42%','App user'], ['28%','NPS Promoter'] ],
     radar:[72, 162, 68, 118, 72],
-    diffs:['Value Orientation index of 162 — the defining characteristic of this segment','Heaviest McDonald\'s and Chick-fil-A cross-shoppers (88% and 62% past-3-month usage)','Lowest NPS promoter rate at 28% — satisfaction exists but advocacy is weak','Most likely to respond to value-signal messaging and promotional offers','Represents a real conversion opportunity if price-perception gap can be closed'],
-    activation:{channel:'Google Search (branded + "value" keywords), coupon aggregator sites, geo-targeted OOH',message:'"Premium quality. Smarter price." Reframe the value equation — cost-per-quality, not cost-per-burger.',offer:'App-exclusive combo deals, limited free upgrade (chicken to ShackBurger), value meal bundle'} },
+    diffs:['Value Orientation index of 162, the defining characteristic of this segment','Heaviest McDonald\'s and Chick-fil-A cross-shoppers (88% and 62% past-3-month usage)','Lowest NPS promoter rate at 28%; satisfaction exists but advocacy is weak','Most likely to respond to value-signal messaging and promotional offers','Represents a real conversion opportunity if price-perception gap can be closed'],
+    activation:{channel:'Google Search (branded + "value" keywords), coupon aggregator sites, geo-targeted OOH',message:'"Premium quality. Smarter price." Reframe the value equation: cost-per-quality, not cost-per-burger.',offer:'App-exclusive combo deals, limited free upgrade (chicken to ShackBurger), value meal bundle'} },
   { id:'E', name:'Brand Advocate',     pct:17, n:170, color:'#8b5cf6', emoji:'❤️',
     tagline:'True brand fan, LTO chaser, high-NPS social amplifier',
     quote:'"I tell everyone about the new LTO before it even launches. I\'m the Shake Shack person in my friend group."',
     stats:[ ['28%','Visit weekly+'], ['$24','Avg spend'], ['68%','App user'], ['74%','NPS Promoter'] ],
     radar:[142, 74, 135, 62, 168],
-    diffs:['Highest NPS Promoter rate at 74% — the brand\'s most powerful word-of-mouth engine','LTO purchase rate of 71% — highest of any segment by a large margin','Social Influence index of 168 — actively recommends and advocates for the brand online','Youngest skew (35% aged 18–24) with strong Gen Z representation','Motivated by brand values: no hormones/antibiotics, quality ingredients, sustainability mission'],
+    diffs:['Highest NPS Promoter rate at 74%, making this the brand\'s most powerful word-of-mouth engine','LTO purchase rate of 71%, highest of any segment by a wide margin','Social Influence index of 168, actively recommends and advocates for the brand online','Youngest skew (35% aged 18–24) with strong Gen Z representation','Drawn to what the brand stands for: clean ingredients, no antibiotics, sustainability'],
     activation:{channel:'Instagram, TikTok, email (brand newsletter), brand community platform',message:'"Be first. Always." Celebrate their insider status and brand knowledge. Seed LTO previews.',offer:'Early access to LTO launches, brand ambassador / UGC program, loyalty points for social shares'} }
 ];
 
@@ -465,9 +465,9 @@ const TYPING_QS = [
     ]},
   { q:'Do you follow Shake Shack on social or try limited-time items?',
     opts:[
-      { t:'Yes — I\'m always in the know',             s:{A:1,B:0,C:0,D:0,E:3} },
+      { t:'Yes, I\'m always in the know',               s:{A:1,B:0,C:0,D:0,E:3} },
       { t:'Sometimes, if something catches my eye',   s:{A:2,B:1,C:1,D:0,E:1} },
-      { t:'Not really — I stick to my usual order',   s:{A:1,B:2,C:2,D:1,E:0} },
+      { t:'Not really, I stick to my usual order',     s:{A:1,B:2,C:2,D:1,E:0} },
       { t:'No, I don\'t pay attention to the brand',  s:{A:0,B:0,C:1,D:3,E:0} },
     ]},
   { q:'Which best describes how you think about Shake Shack?',
@@ -490,20 +490,20 @@ const PRIORITY_DATA = [
 const PRIORITY_NOTES = [
   { id:'A', tier:1, note:'Highest-value, high-conversion. Invest heavily in retention and loyalty depth.' },
   { id:'C', tier:1, note:'High frequency, easy to win via mobile/app. Optimize order experience.' },
-  { id:'E', tier:2, note:'Small but powerful amplifiers. Fuel their advocacy — disproportionate ROI.' },
+  { id:'E', tier:2, note:'Small but powerful amplifiers. Fuel their advocacy for disproportionate ROI.' },
   { id:'B', tier:2, note:'Large segment; moderate ease. Occasion-based campaigns unlock scale.' },
   { id:'D', tier:3, note:'Hard to win, low NPS. Targeted value promotions may convert some; manage ROI carefully.' },
 ];
 
 const APPENDIX_QS = [
-  { n:'S1', t:'In the past 3 months, which of the following fast casual or QSR restaurants have you visited?', type:'Screener — Multi-select, randomized' },
-  { n:'S2', t:'How often do you typically visit Shake Shack?', type:'Frequency scale — Single select' },
+  { n:'S1', t:'In the past 3 months, which of the following fast casual or QSR restaurants have you visited?', type:'Screener: multi-select, randomized' },
+  { n:'S2', t:'How often do you typically visit Shake Shack?', type:'Frequency scale: single select' },
   { n:'Q1–Q5', t:'Category usage: frequency, spend, channel, party size, time of day', type:'Behavioral battery' },
   { n:'Q6–Q10', t:'Shake Shack-specific: visit frequency, app usage, LTO purchase, delivery usage', type:'Brand behavior battery' },
-  { n:'Q11–Q38', t:'28-item attitudinal battery measuring quality consciousness, value orientation, experience seeking, convenience prioritization, and social influence (5-pt Likert: Strongly Agree to Strongly Disagree)', type:'Needs/attitude battery — Segmentation input' },
+  { n:'Q11–Q38', t:'28-item attitudinal battery measuring quality consciousness, value orientation, experience seeking, convenience prioritization, and social influence (5-pt Likert: Strongly Agree to Strongly Disagree)', type:'Needs/attitude battery: segmentation input' },
   { n:'Q39–Q43', t:'Brand funnel: Shake Shack awareness, trial, current use, preference, NPS (0–10)', type:'Brand equity measures' },
-  { n:'Q44–Q49', t:'Competitive brand usage grid: past-3-month visit, preference, and recommendation intent for each of 6 brands — McDonald\'s, Chick-fil-A, Five Guys, Chipotle, In-N-Out, Wendy\'s (one question per brand)', type:'Competitive benchmarking — grid format' },
-  { n:'D1–D7', t:'Demographics: age, gender, household income, region, household composition, employment status, education', type:'Demographic profile — Collected last' },
+  { n:'Q44–Q49', t:'Competitive brand usage grid: past-3-month visit, preference, and recommendation intent for each of 6 brands (McDonald\'s, Chick-fil-A, Five Guys, Chipotle, In-N-Out, Wendy\'s), one question per brand', type:'Competitive benchmarking: grid format' },
+  { n:'D1–D7', t:'Demographics: age, gender, household income, region, household composition, employment status, education', type:'Demographic profile: collected last' },
 ];
 
 const METHODS = [
@@ -516,10 +516,10 @@ const METHODS = [
 
 const KEY_FINDINGS = [
   { n:'01', t:'<strong>Brand Advocates (17%) drive disproportionate word-of-mouth.</strong> With an NPS Promoter rate of 74% and Social Influence index of 168, this segment delivers referral value far beyond its size. Invest in their advocacy, not just their visits.' },
-  { n:'02', t:'<strong>Lunch Regulars (21%) are the mobile-app opportunity.</strong> 79% are app users — the highest of any segment — yet they\'re underserved by current loyalty mechanics. A dedicated "lunch loyalty" program could significantly lift frequency and visit value.' },
-  { n:'03', t:'<strong>Value Skeptics (20%) are not lost customers — they\'re unconvinced ones.</strong> 76% are aware of Shake Shack; 58% have visited. The gap is price perception, not category disinterest. Targeted value messaging and app-exclusive deals can close it.' },
-  { n:'04', t:'<strong>Occasional Treaters (23%) are the largest segment but the hardest to convert to regulars.</strong> Occasion-based marketing (family outings, treat nights) is the right frame. Don\'t try to change the habit — own the occasion.' },
-  { n:'05', t:'<strong>Urban Enthusiasts (19%) are the brand\'s current revenue core.</strong> Highest frequency, highest spend, lowest competitive cross-shopping. Retention and loyalty depth are the priority — they\'re already bought in.' },
+  { n:'02', t:'<strong>Lunch Regulars (21%) are the mobile-app opportunity.</strong> 79% are app users, the highest of any segment, yet they\'re underserved by current loyalty mechanics. A dedicated "lunch loyalty" program could meaningfully lift visit frequency and total value.' },
+  { n:'03', t:'<strong>Value Skeptics (20%) are not lost customers. They\'re unconvinced ones.</strong> 76% are aware of Shake Shack; 58% have visited. The gap is price perception, not category disinterest. Targeted value messaging and app-exclusive deals can close it.' },
+  { n:'04', t:'<strong>Occasional Treaters (23%) are the largest segment but the hardest to convert to regulars.</strong> Occasion-based marketing (family outings, treat nights) is the right frame. Don\'t try to change the habit. Own the occasion.' },
+  { n:'05', t:'<strong>Urban Enthusiasts (19%) are the brand\'s current revenue core.</strong> Highest frequency, highest spend, lowest competitive cross-shopping. Retention and loyalty depth are the priority. They\'re already bought in.' },
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -945,7 +945,7 @@ function renderPriorityChart() {
 function renderPrioritySummary() {
   const wrap = document.getElementById('priority-summary');
   const tierColors = ['#059669','#3b82f6','#ef4444'];
-  const tierLabels = ['Tier 1 — Invest Heavily','Tier 2 — Scale Carefully','Tier 3 — Selective Investment'];
+  const tierLabels = ['Tier 1: Invest','Tier 2: Scale Carefully','Tier 3: Selective'];
   const tiers = [1,2,3];
   tiers.forEach((tier, ti) => {
     const items = PRIORITY_NOTES.filter(p=>p.tier===tier);
